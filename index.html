@@ -141,6 +141,13 @@
   a { color: var(--gold-light); }
   .link-btn { background: none; border: none; color: var(--gold-light); text-decoration: underline; padding: 0; font-size: 13px; }
 
+  /* Network trouble banner (requirement #8) */
+  #network-banner {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+    background: #4a1414; color: #ffb3b3; border-bottom: 1px solid #7a2222;
+    text-align: center; font-size: 13px; padding: 7px 10px;
+  }
+
   /* ==========================================================================
      GAME SCREEN — Texas Hold'em ширээ
      ========================================================================== */
@@ -206,6 +213,8 @@
   }
   .seat-pos.active-turn .seat-card { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold), 0 0 16px rgba(212,175,55,0.5); }
   .seat-pos.folded .seat-card { opacity: 0.4; }
+  .seat-pos.eliminated .seat-card, .seat-pos.sitting-out .seat-card { opacity: 0.32; filter: grayscale(0.9); }
+  .seat-pos .seat-status-label { font-size: 9px; color: var(--text-dim); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
   .seat-pos .seat-name { font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .seat-pos .seat-stack { font-size: 11px; color: var(--gold-light); margin-top: 1px; }
   .seat-pos .seat-tags { display: flex; gap: 3px; justify-content: center; margin-top: 2px; }
@@ -276,13 +285,14 @@
     padding: 10px 12px; padding-bottom: max(10px, env(safe-area-inset-bottom)); z-index: 5;
   }
   .action-bar .my-turn-note { text-align: center; font-size: 12px; color: var(--gold-light); margin-bottom: 8px; }
-  .action-buttons { display: flex; gap: 8px; }
-  .action-buttons button { flex: 1; min-height: 44px; font-size: 13px; }
+  .action-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+  .action-buttons button { flex: 1; min-height: 44px; font-size: 13px; min-width: 64px; }
   .raise-panel { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
   .raise-panel input[type="range"] { flex: 1; accent-color: var(--gold); height: 44px; }
   .raise-panel .raise-amount { min-width: 70px; text-align: right; font-weight: 700; color: var(--gold-light); font-size: 14px; }
   .raise-presets { display: flex; gap: 6px; margin-bottom: 8px; }
   .raise-presets button { flex: 1; padding: 6px; font-size: 11px; min-height: 32px; }
+  .raise-only-allin-note { text-align: center; font-size: 12px; color: var(--text-dim); margin-bottom: 8px; }
   .not-my-turn-note { text-align: center; font-size: 12px; color: var(--text-dim); padding: 8px 0; }
 
   .game-chat-toggle { position: absolute; top: 8px; right: 10px; z-index: 6; }
@@ -307,6 +317,8 @@
 </style>
 </head>
 <body>
+
+<div id="network-banner" class="hidden">⚠ Холболтод асуудал гарлаа. Холболт сэргэхийг хүлээж байна…</div>
 
 <!-- ============ CONFIG SCREEN (shown only if Supabase keys are missing) ============ -->
 <div id="config-screen" class="screen center-screen hidden">
@@ -539,17 +551,32 @@
       <button class="secondary" id="preset-half">½ банк</button>
       <button class="secondary" id="preset-threequarter">¾ банк</button>
       <button class="secondary" id="preset-pot">Пот</button>
-      <button class="secondary" id="preset-allin">All-in</button>
     </div>
+    <div id="raise-only-allin-note" class="raise-only-allin-note hidden">Зөвхөн All-in боломжтой (жетон хэмжээ хамгийн бага raise-ээс бага байна).</div>
     <div class="action-buttons" id="action-buttons">
       <button class="danger" id="act-fold">Фолд</button>
       <button class="secondary" id="act-check">Чек</button>
       <button class="secondary" id="act-call">Колл</button>
       <button class="primary" id="act-bet-raise">Бэт</button>
+      <button class="success" id="act-allin">All-in</button>
       <button class="success" id="act-confirm-raise" style="display:none;">Батлах</button>
       <button class="secondary" id="act-cancel-raise" style="display:none;">Цуцлах</button>
     </div>
     <div id="not-my-turn-note" class="not-my-turn-note">Хүлээж байна…</div>
+  </div>
+</div>
+
+<!-- ============ GAME FINISHED SCREEN ============ -->
+<div id="game-finished-screen" class="screen center-screen hidden">
+  <div class="card">
+    <div class="logo"><h1>KHAN POKER</h1><p>Тоглолт дууслаа</p></div>
+    <div style="text-align:center; padding: 10px 0 18px;">
+      <div style="color: var(--text-dim); font-size:13px; margin-bottom:6px;">Ялагч</div>
+      <div id="game-finished-winner" style="color: var(--gold-light); font-size:22px; font-weight:800;">—</div>
+    </div>
+    <div class="modal-actions">
+      <button class="primary" id="game-finished-lobby-btn" style="flex:1;">Lobby руу буцах</button>
+    </div>
   </div>
 </div>
 
@@ -607,38 +634,103 @@ function toast(message, type = "info") {
   setTimeout(() => el.remove(), 4500);
 }
 
+// ---------------------------------------------------------------------------
+// Алдааны мэдэгдэл — v2 RPC-ийн error код бүрийг монгол хэлээр харуулна.
+// (0009_poker_game_core_safe.sql-ийн бүх "raise exception 'CODE' using
+// hint = '...'" мөрүүдийг тэмдэглэсэн болно.) Тодорхойгүй/шинэ код гарвал
+// эхлээд серверээс ирсэн hint (аль хэдийн монгол) ашиглана, тэр ч байхгүй
+// бол ерөнхий алдааны мессеж рүү унана — хэзээ ч түүхий Postgres мессеж
+// хэрэглэгчид харагдахгүй.
+// ---------------------------------------------------------------------------
+const ERROR_MAP = {
+  UNAUTHORIZED: "Нэвтрэх шаардлагатай.",
+  PROFILE_NOT_FOUND: "Профайл олдсонгүй.",
+  ALREADY_IN_ROOM: "Та аль хэдийн өөр өрөөнд байна.",
+  ROOM_NOT_FOUND: "Өрөө олдсонгүй. Код-оо шалгана уу.",
+  ROOM_NOT_JOINABLE: "Энэ өрөөнд одоо нэгдэх боломжгүй.",
+  ROOM_NOT_WAITING: "Өрөөний төлөв тоглолт эхлэхэд тохирохгүй байна.",
+  ROOM_FULL: "Өрөө дүүрсэн байна.",
+  WRONG_PASSWORD: "Нууц үг буруу байна.",
+  PASSWORD_REQUIRED: "Нууц үг шаардлагатай.",
+  KICKED_FROM_ROOM: "Та энэ өрөөнөөс хасагдсан.",
+  NOT_HOST: "Зөвхөн өрөөний эзэн энэ үйлдлийг хийнэ.",
+  NOT_ENOUGH_PLAYERS: "Хамгийн багадаа 2 тоглогч хэрэгтэй.",
+  PLAYERS_NOT_READY: "Бүх тоглогч бэлэн болоогүй байна.",
+  ALREADY_STARTED: "Тоглолт аль хэдийн эхэлсэн байна.",
+  ALREADY_MEMBER: "Та аль хэдийн энэ өрөөнд байна.",
+  SEAT_TAKEN: "Энэ суудлыг өөр тоглогч эзэлсэн байна.",
+  RATE_LIMITED: "Хэт олон мессеж бичлээ. Түр хүлээгээрэй.",
+  "Invalid login credentials": "И-мэйл эсвэл нууц үг буруу байна.",
+  GAME_NOT_FOUND: "Тоглоом олдсонгүй.",
+  HAND_NOT_FOUND: "Гар олдсонгүй.",
+  HAND_NOT_ACTIVE: "Энэ гарын үйлдэл хийх боломжгүй төлөвт байна.",
+  NOT_YOUR_TURN: "Таны ээлж биш байна.",
+  NOT_IN_HAND: "Та энэ гарт оролцохгүй байна.",
+  INVALID_ACTION: "Буруу үйлдэл.",
+  ILLEGAL_ACTION: "Энэ үйлдлийг одоо хийх боломжгүй (short all-in дараа зөвхөн call/fold).",
+  INVALID_RAISE_AMOUNT: "Raise-ийн хэмжээ буруу байна.",
+  VALIDATION_ERROR: "Оруулсан хэмжээ буруу эсвэл жетон хүрэлцэхгүй байна.",
+  RAISE_TOO_LOW: "Raise хамгийн багадаа минимум хэмжээнээс их байх ёстой.",
+  NOT_ENOUGH_STACK: "Таны жетон хүрэлцэхгүй байна.",
+  STATE_VERSION_MISMATCH: "Тоглоомын төлөв шинэчлэгдсэн байна. Үйлдлээ дахин сонгоно уу.",
+  DECK_INTEGRITY_ERROR: "Тавцангийн бүрэн бүтэн байдлын алдаа гарлаа. Дахин оролдоно уу.",
+  SETTLEMENT_INTEGRITY_ERROR: "Гарын тооцооны алдаа гарлаа. Дэмжлэгтэй холбогдоно уу.",
+  CHIP_CONSERVATION_VIOLATED: "Жетоны тооцооны алдаа илэрлээ. Дэмжлэгтэй холбогдоно уу.",
+  PREFLIGHT_FAILED: "Серверийн тохиргооны алдаа гарлаа.",
+  UNSAFE_MIGRATION: "Серверийн шинэчлэлтийн алдаа гарлаа.",
+  INVALID_ARGUMENT: "Буруу параметр дамжуулагдлаа.",
+};
+
 function friendlyError(err) {
   if (!err) return "Тодорхойгүй алдаа гарлаа.";
   const msg = err.message || String(err);
-  const map = {
-    UNAUTHORIZED: "Нэвтрэх шаардлагатай.",
-    PROFILE_NOT_FOUND: "Профайл олдсонгүй.",
-    ALREADY_IN_ROOM: "Та аль хэдийн өөр өрөөнд байна.",
-    ROOM_NOT_FOUND: "Өрөө олдсонгүй. Код-оо шалгана уу.",
-    ROOM_NOT_JOINABLE: "Энэ өрөөнд одоо нэгдэх боломжгүй.",
-    ROOM_FULL: "Өрөө дүүрсэн байна.",
-    WRONG_PASSWORD: "Нууц үг буруу байна.",
-    PASSWORD_REQUIRED: "Нууц үг шаардлагатай.",
-    KICKED_FROM_ROOM: "Та энэ өрөөнөөс хасагдсан.",
-    NOT_HOST: "Зөвхөн өрөөний эзэн энэ үйлдлийг хийнэ.",
-    NOT_ENOUGH_PLAYERS: "Хамгийн багадаа 2 тоглогч хэрэгтэй.",
-    PLAYERS_NOT_READY: "Бүх тоглогч бэлэн болоогүй байна.",
-    ALREADY_MEMBER: "Та аль хэдийн энэ өрөөнд байна.",
-    SEAT_TAKEN: "Энэ суудлыг өөр тоглогч эзэлсэн байна.",
-    RATE_LIMITED: "Хэт олон мессеж бичлээ. Түр хүлээгээрэй.",
-    "Invalid login credentials": "И-мэйл эсвэл нууц үг буруу байна.",
-    GAME_NOT_FOUND: "Тоглоом олдсонгүй.",
-    HAND_NOT_FOUND: "Гар олдсонгүй.",
-    HAND_NOT_ACTIVE: "Энэ гарын үйлдэл хийх боломжгүй төлөвт байна.",
-    NOT_YOUR_TURN: "Таны ээлж биш байна.",
-    NOT_IN_HAND: "Та энэ гарт оролцохгүй байна.",
-    INVALID_ACTION: "Буруу үйлдэл.",
-    ILLEGAL_ACTION: "Энэ үйлдлийг одоо хийх боломжгүй.",
-    INVALID_RAISE_AMOUNT: "Raise-ийн хэмжээ буруу байна.",
-    RAISE_TOO_LOW: "Raise хамгийн багадаа минимум хэмжээнээс их байх ёстой.",
-    NOT_ENOUGH_STACK: "Таны жетон хүрэлцэхгүй байна.",
-  };
-  return map[msg] || msg;
+  if (ERROR_MAP[msg]) return ERROR_MAP[msg];
+  // Зарим хуучин алдаа "CODE: message" хэлбэртэй байж болно.
+  const codeOnly = msg.split(":")[0].trim();
+  if (ERROR_MAP[codeOnly]) return ERROR_MAP[codeOnly];
+  // Сервер өөрөө аль хэдийн монгол hint өгсөн бол түүнийг ашиглана.
+  if (err.hint && typeof err.hint === "string") return err.hint;
+  return "Тодорхойгүй алдаа гарлаа. Дахин оролдоно уу.";
+}
+
+// ---------------------------------------------------------------------------
+// Сүлжээний алдаа илрүүлэх (requirement #8) — RPC-ийн ердийн exception
+// (PostgrestError, .code талбартай) БИШ, харин fetch бүрэн бүтэлгүйтсэн
+// эсэхийг ялгана.
+// ---------------------------------------------------------------------------
+function isNetworkError(err) {
+  if (!err) return false;
+  if (typeof navigator !== "undefined" && navigator.onLine === false) return true;
+  if (err instanceof TypeError) return true;
+  const msg = (err.message || "").toLowerCase();
+  return msg.includes("failed to fetch") || msg.includes("network") || msg.includes("load failed") || msg.includes("networkerror");
+}
+
+let networkTroubleActive = false;
+function reportNetworkTrouble() {
+  if (networkTroubleActive) return;
+  networkTroubleActive = true;
+  show($("network-banner"));
+}
+function clearNetworkTrouble() {
+  if (!networkTroubleActive) return;
+  networkTroubleActive = false;
+  hide($("network-banner"));
+}
+// Дурын RPC/дуудлагын үр дүнг сүлжээний алдаатай эсэхийг шалгаад дамжуулна.
+async function safeRpc(name, params) {
+  try {
+    const res = await sb.rpc(name, params);
+    if (res.error && isNetworkError(res.error)) {
+      reportNetworkTrouble();
+    } else {
+      clearNetworkTrouble();
+    }
+    return res;
+  } catch (err) {
+    if (isNetworkError(err)) reportNetworkTrouble();
+    return { data: null, error: err };
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -649,23 +741,32 @@ const state = {
   profile: null,
   currentRoomId: null,
   roomChannel: null,
-  lobbyChannel: null,
+  roomPollInterval: null,
+  lobbyPollInterval: null,
   roomData: null,
   players: [],
   messages: [],
   // game screen
   currentGameId: null,
-  gameChannel: null,
+  gameChannelMain: null,   // game_id-хамааралтай: poker_hands, game_players, chat
+  gameChannelHand: null,   // hand_id-хамааралтай: hand_players, poker_actions, hand_results
+  subscribedHandId: null,
   gamePollInterval: null,
   gameTimerInterval: null,
-  gameState: null, // last result of get_poker_state_v1
+  gameState: null,         // last result of get_poker_state_v2
+  gameRoster: [],           // full game_players roster (incl. eliminated/sitting_out), incl. profiles
   gameMessages: [],
   raiseAmount: 0,
   raiseMode: false,
+  serverOffsetMs: 0,        // serverNow - Date.now() at last successful fetch
+  // in-flight / debounce guards (requirement #3)
+  gameStateFetchInFlight: false,
+  gameStateFetchQueued: false,
+  gameStateDebounceTimer: null,
 };
 
 function screen(name) {
-  ["config-screen", "auth-screen", "lobby-screen", "room-screen", "game-screen"].forEach((id) => hide($(id)));
+  ["config-screen", "auth-screen", "lobby-screen", "room-screen", "game-screen", "game-finished-screen"].forEach((id) => hide($(id)));
   show($(name));
 }
 
@@ -786,7 +887,7 @@ function renderRoomList(rooms) {
 
 function escapeHtml(s) {
   const d = document.createElement("div");
-  d.textContent = s;
+  d.textContent = s == null ? "" : String(s);
   return d.innerHTML;
 }
 
@@ -800,16 +901,12 @@ $("join-code-btn").onclick = () => {
 
 let pendingJoinCode = null;
 async function attemptJoin(code, withPassword, password) {
-  const btnState = toast("Нэгдэж байна...", "info");
   try {
     const { data, error } = await sb.rpc("join_room_by_code_v2", {
       p_code: code,
       p_password: withPassword ? password : null,
     });
     if (error) {
-      if (error.message === "WRONG_PASSWORD" || (error.message === "PASSWORD_REQUIRED")) {
-        // fall through to password prompt below (also handles first-attempt private rooms)
-      }
       if (!withPassword && (error.message.includes("PASSWORD") || error.message === "WRONG_PASSWORD")) {
         pendingJoinCode = code;
         $("jp-password").value = "";
@@ -1037,7 +1134,7 @@ $("ready-toggle-btn").onclick = async () => {
 $("start-game-btn").onclick = async () => {
   $("start-game-btn").disabled = true;
   try {
-    const { error } = await sb.rpc("start_poker_game_v1", { p_room_id: state.currentRoomId });
+    const { error } = await sb.rpc("start_poker_game_v2", { p_room_id: state.currentRoomId });
     if (error) throw error;
     toast("Тоглолт эхэллээ!", "success");
     await enterGame(state.currentRoomId);
@@ -1067,12 +1164,16 @@ $("leave-room-btn").onclick = async () => {
 
 function backToLobby() {
   unsubscribeRoomRealtime();
+  unsubscribeGameRealtime();
   state.currentRoomId = null;
   state.roomData = null;
   state.players = [];
   state.messages = [];
+  state.currentGameId = null;
+  state.gameState = null;
   screen("lobby-screen");
   refreshLobby();
+  subscribeLobbyRealtime();
 }
 
 $("room-code-display").onclick = () => {
@@ -1121,25 +1222,157 @@ async function enterGame(roomId) {
     return backToLobby();
   }
   state.currentGameId = game.id;
+  state.subscribedHandId = null;
   unsubscribeRoomRealtime();
   screen("game-screen");
-  await refreshGameState();
   subscribeGameRealtime();
+  await refreshGameState();
 }
 
+// ---------------------------------------------------------------------------
+// refreshGameState — requirement #3: зэрэг ажиллахаас хамгаалсан (in-flight
+// lock) болон debounce хийсэн triggerRefreshGameState() wrapper-тэй.
+// ---------------------------------------------------------------------------
 async function refreshGameState() {
   if (!state.currentGameId) return;
-  const { data, error } = await sb.rpc("get_poker_state_v1", { p_game_id: state.currentGameId });
-  if (error) {
-    if (error.message === "GAME_NOT_FOUND" || error.message === "UNAUTHORIZED") {
-      toast("Тоглоом дууссан эсвэл олдсонгүй.", "error");
-      return backToLobby();
-    }
-    console.error(error);
+  if (state.gameStateFetchInFlight) {
+    // Аль хэдийн нэг дуудлага явж байна — дараа нь дахин нэг удаа
+    // татахаар "queue" хийгээд, зэрэг хоёр дуудлага явуулахгүй.
+    state.gameStateFetchQueued = true;
     return;
   }
-  state.gameState = data;
-  renderGame();
+  state.gameStateFetchInFlight = true;
+  try {
+    const fetchStartedAt = Date.now();
+    const { data, error } = await sb.rpc("get_poker_state_v2", { p_game_id: state.currentGameId });
+    if (error) {
+      if (isNetworkError(error)) {
+        reportNetworkTrouble();
+        return;
+      }
+      clearNetworkTrouble();
+      if (error.message === "GAME_NOT_FOUND") {
+        toast("Тоглоом олдсонгүй.", "error");
+        return backToLobby();
+      }
+      if (error.message === "UNAUTHORIZED") {
+        // Магадгүй бид энэ тоглоомоос "eliminated"/"sitting_out" болсон
+        // тул get_poker_state_v2 цаашид биднийг зөвшөөрөхгүй (RPC-ийн
+        // өөрийн шалгалт зөвхөн active/all_in гишүүнд л state өгдөг).
+        // Ийм тохиолдолд шууд лоби руу шидэхийн оронд эхлээд тоглоом
+        // яг дуусаж, бид "finished game" дэлгэцийг харуулах ёстой эсэхийг
+        // шууд table-аас (RLS-ээр зөвшөөрөгдсөн) шалгана.
+        await handlePossibleElimination();
+        return;
+      }
+      console.error(error);
+      return;
+    }
+    clearNetworkTrouble();
+    // Клиент/сервер цагийн зөрүү (offset) — requirement #2.
+    const serverNowRaw = (data.hand && data.hand.serverNow) || data.serverNow;
+    if (serverNowRaw) {
+      const serverNowMs = new Date(serverNowRaw).getTime();
+      // fetch эхэлсэн цагийг ойролцоогоор "one-way" зөрүүг тооцоход ашиглана.
+      state.serverOffsetMs = serverNowMs - fetchStartedAt;
+    }
+    state.gameState = data;
+
+    // Hand өөрчлөгдсөн эсэхийг шалгаад, шаардлагатай бол hand-хамааралтай
+    // realtime channel-уудыг шинэ hand_id-д дахин subscribe хийнэ (requirement #4).
+    const newHandId = data.hand ? data.hand.id : null;
+    if (newHandId !== state.subscribedHandId) {
+      subscribeHandChannel(newHandId);
+    }
+
+    // Тоглоом дуусвал (requirement #6) шууд finished screen рүү шилжинэ.
+    if (data.game && data.game.status === "finished") {
+      await showGameFinishedScreen();
+      return;
+    }
+
+    await loadGameRoster();
+    renderGame();
+  } catch (err) {
+    if (isNetworkError(err)) reportNetworkTrouble();
+    else console.error(err);
+  } finally {
+    state.gameStateFetchInFlight = false;
+    if (state.gameStateFetchQueued) {
+      state.gameStateFetchQueued = false;
+      // Дараагийн event loop tick-д ажиллуулна — шууд recursion-оос зайлсхийнэ.
+      setTimeout(refreshGameState, 0);
+    }
+  }
+}
+
+// Дуудагдах бүх realtime/poll/visibility trigger-үүд ЭНЭ функцийг дуудна:
+// ойролцоогоор 150мс debounce хийж, богино хугацаанд хэд хэдэн event
+// (жишээ нь realtime + poll) зэрэг ирэхэд нэг л таталт болгож нэгтгэнэ.
+function triggerRefreshGameState() {
+  if (state.gameStateDebounceTimer) clearTimeout(state.gameStateDebounceTimer);
+  state.gameStateDebounceTimer = setTimeout(() => {
+    state.gameStateDebounceTimer = null;
+    refreshGameState();
+  }, 150);
+}
+
+// leave_poker_game_v1-ийн дараа (эсвэл өөр тоглогчийн үйлдлээр бид
+// "eliminated"/"sitting_out" болмогц) get_poker_state_v2 UNAUTHORIZED
+// шидэх тул games/game_players table-аас шууд (RLS зөвшөөрдөг) уншиж,
+// тоглоом яг дуусаж, ялагч тодорсон эсэхийг шалгана.
+async function handlePossibleElimination() {
+  if (!state.currentGameId) return;
+  try {
+    const { data: game } = await sb.from("games").select("*").eq("id", state.currentGameId).maybeSingle();
+    if (game && game.status === "finished") {
+      await showGameFinishedScreen();
+      return;
+    }
+    // Тоглоом идэвхтэй хэвээр, бид зүгээр "sitting_out" болсон байх — үлдсэн
+    // тоглогчдыг чимээгүй хүлээж, дараагийн үйлдэл эсвэл leave-ийг хүлээнэ.
+    // Danагдах зүйлгүй тул зөвхөн лог хийж, дэлгэцийг хэвээр үлдээнэ.
+  } catch (err) {
+    if (isNetworkError(err)) reportNetworkTrouble();
+    else console.error(err);
+  }
+}
+
+// requirement #6: тоглоом дууссан дэлгэц — ялагчийн нэрийг game_players-аас
+// (RLS-ээр зөвшөөрөгдсөн шууд select) олж харуулна.
+async function showGameFinishedScreen() {
+  unsubscribeGameRealtime();
+  let winnerName = "—";
+  try {
+    const { data: roster } = await sb
+      .from("game_players")
+      .select("*, profiles(display_name)")
+      .eq("game_id", state.currentGameId);
+    const winner = (roster || []).find((p) => p.status === "active") || (roster || []).sort((a, b) => b.stack - a.stack)[0];
+    if (winner) winnerName = winner.profiles ? winner.profiles.display_name : "Тоглогч";
+  } catch (err) {
+    if (isNetworkError(err)) reportNetworkTrouble();
+  }
+  setText($("game-finished-winner"), winnerName);
+  screen("game-finished-screen");
+}
+$("game-finished-lobby-btn").onclick = () => backToLobby();
+
+// requirement #7: eliminated/sitting_out тоглогчдын бүрэн жагсаалтыг (тэд
+// одоогийн hand.players-т байхгүй тул) шууд game_players table-аас
+// нэмж уншина — RLS нь room_players гишүүн байсан (left байсан ч) бүх
+// хэрэглэгчид select зөвшөөрдөг тул үргэлж ажиллана.
+async function loadGameRoster() {
+  if (!state.currentGameId) { state.gameRoster = []; return; }
+  try {
+    const { data, error } = await sb
+      .from("game_players")
+      .select("*, profiles(display_name, avatar_key)")
+      .eq("game_id", state.currentGameId);
+    if (!error) state.gameRoster = data || [];
+  } catch (err) {
+    if (isNetworkError(err)) reportNetworkTrouble();
+  }
 }
 
 function renderGame() {
@@ -1168,18 +1401,44 @@ function renderGame() {
   setText($("game-pot"), hand.pot);
   $("community-cards").innerHTML = (hand.communityCards || []).map((c) => cardHtml(c)).join("");
 
-  const n = gs.players.length;
+  // Идэвхтэй hand-ийн тоглогчид + requirement #7-ийн дагуу sitting_out/
+  // eliminated (энэ hand-д байхгүй ч роостерт байгаа) тоглогчдыг нэмж,
+  // нэг нэгдсэн жагсаалт үүсгэнэ.
+  const handUserIds = new Set(gs.players.map((p) => p.userId));
+  const extraSeats = (state.gameRoster || [])
+    .filter((gp) => !handUserIds.has(gp.user_id) && (gp.status === "eliminated" || gp.status === "sitting_out"))
+    .map((gp) => ({
+      userId: gp.user_id,
+      seatNumber: gp.seat_number,
+      displayName: gp.profiles ? gp.profiles.display_name : "Тоглогч",
+      stack: gp.stack,
+      streetBet: 0,
+      status: gp.status, // 'eliminated' | 'sitting_out'
+      lastAction: null,
+      isDealer: false, isSmallBlind: false, isBigBlind: false,
+      holeCardCount: 0, revealedCards: null,
+      isExtraSeat: true,
+    }));
+  const combinedPlayers = gs.players.concat(extraSeats).sort((a, b) => a.seatNumber - b.seatNumber);
+
+  const n = combinedPlayers.length;
   // Тоглогчдын жагсаалтыг ЭЭЛЖИЙН дараалалтай тааруулж, "миний суудал"
   // ХАМГИЙН ДООД (top:88%) байрлалд байрлуулна — бусад тоглогч цагийн зүү
   // дагуу эргэн харагдана.
-  const myIdx = gs.players.findIndex((p) => p.userId === me);
+  const myIdx = combinedPlayers.findIndex((p) => p.userId === me);
   const order = myIdx >= 0
-    ? gs.players.slice(myIdx).concat(gs.players.slice(0, myIdx))
-    : gs.players;
+    ? combinedPlayers.slice(myIdx).concat(combinedPlayers.slice(0, myIdx))
+    : combinedPlayers;
 
   order.forEach((p, i) => {
     const el = document.createElement("div");
-    el.className = "seat-pos" + (p.status === "folded" ? " folded" : "") + (hand.activeSeat === p.seatNumber && hand.phase !== "complete" ? " active-turn" : "");
+    const isEliminated = p.status === "eliminated";
+    const isSittingOut = p.status === "sitting_out";
+    el.className = "seat-pos"
+      + (p.status === "folded" ? " folded" : "")
+      + (isEliminated ? " eliminated" : "")
+      + (isSittingOut ? " sitting-out" : "")
+      + (hand.activeSeat === p.seatNumber && hand.phase !== "complete" ? " active-turn" : "");
     el.dataset.n = String(n);
     el.dataset.i = String(i);
 
@@ -1189,16 +1448,19 @@ function renderGame() {
     if (p.isBigBlind) tags.push('<span class="seat-tag bb">BB</span>');
 
     let holeHtml = "";
-    if (p.userId === me && gs.myHoleCards && gs.myHoleCards.length) {
-      holeHtml = `<div class="hole-cards my-hole">${gs.myHoleCards.map((c) => cardHtml(c, "small")).join("")}</div>`;
-    } else if (p.revealedCards && p.revealedCards.length) {
-      holeHtml = `<div class="hole-cards my-hole">${p.revealedCards.map((c) => cardHtml(c, "small")).join("")}</div>`;
-    } else if (p.holeCardCount > 0 && p.status !== "folded") {
-      holeHtml = `<div class="hole-cards my-hole">${cardBackHtml("small")}${cardBackHtml("small")}</div>`;
+    if (!p.isExtraSeat) {
+      if (p.userId === me && gs.myHoleCards && gs.myHoleCards.length) {
+        holeHtml = `<div class="hole-cards my-hole">${gs.myHoleCards.map((c) => cardHtml(c, "small")).join("")}</div>`;
+      } else if (p.revealedCards && p.revealedCards.length) {
+        holeHtml = `<div class="hole-cards my-hole">${p.revealedCards.map((c) => cardHtml(c, "small")).join("")}</div>`;
+      } else if (p.holeCardCount > 0 && p.status !== "folded") {
+        holeHtml = `<div class="hole-cards my-hole">${cardBackHtml("small")}${cardBackHtml("small")}</div>`;
+      }
     }
 
     const isActiveNow = hand.activeSeat === p.seatNumber && hand.phase !== "complete" && !["complete","settlement"].includes(hand.phase);
     const timerRing = isActiveNow ? `<div class="timer-ring" id="timer-ring-${p.seatNumber}"></div>` : "";
+    const statusLabel = isEliminated ? "Хасагдсан" : isSittingOut ? "Түр гарсан" : "";
 
     el.innerHTML = `
       <div class="seat-card">
@@ -1206,6 +1468,7 @@ function renderGame() {
         <div class="seat-name">${escapeHtml(p.displayName)}</div>
         <div class="seat-stack">🪙 ${p.stack}</div>
         <div class="seat-tags">${tags.join("")}</div>
+        ${statusLabel ? `<div class="seat-status-label">${statusLabel}</div>` : ""}
         ${p.lastAction ? `<div class="seat-action-badge ${p.lastAction}">${actionLabel(p.lastAction)}</div>` : ""}
         ${p.streetBet > 0 ? `<div class="bet-chip">${p.streetBet}</div>` : ""}
       </div>
@@ -1242,6 +1505,7 @@ function renderActionBar(gs) {
   state.raiseMode = false;
   hide($("raise-panel"));
   hide($("raise-presets"));
+  hide($("raise-only-allin-note"));
   $("act-confirm-raise").style.display = "none";
   $("act-cancel-raise").style.display = "none";
 
@@ -1267,32 +1531,51 @@ function renderActionBar(gs) {
   $("act-call").textContent = `Колл ${legal.callAmount}`;
   $("act-bet-raise").style.display = (legal.canBet || legal.canRaise) ? "" : "none";
   $("act-bet-raise").textContent = legal.canBet ? "Бэт" : "Нэмэх";
+  // Requirement #10: All-in нь тусдаа, шууд дарж болох товч.
+  $("act-allin").style.display = legal.canAllIn ? "" : "none";
 }
 
 $("act-fold").onclick = () => submitAction("fold");
 $("act-check").onclick = () => submitAction("check");
 $("act-call").onclick = () => submitAction("call");
+$("act-allin").onclick = () => submitAction("all_in");
 
 $("act-bet-raise").onclick = () => {
   const gs = state.gameState;
-  if (!gs) return;
+  if (!gs || !gs.hand) return;
   const legal = gs.legalActions;
-  const min = legal.canBet ? Math.min(gs.hand.currentBet || legal.minimumRaiseTo, legal.minimumRaiseTo) : legal.minimumRaiseTo;
+  const min = legal.minimumRaiseTo;
   const max = legal.maximumRaiseTo;
   state.raiseMode = true;
-  const slider = $("raise-slider");
-  slider.min = String(Math.min(min, max));
-  slider.max = String(max);
-  slider.value = String(Math.min(Math.max(min, min), max));
-  updateRaiseDisplay();
-  show($("raise-panel"));
-  show($("raise-presets"));
+
   $("act-fold").style.display = "none";
   $("act-check").style.display = "none";
   $("act-call").style.display = "none";
   $("act-bet-raise").style.display = "none";
-  $("act-confirm-raise").style.display = "";
+  $("act-allin").style.display = "none";
   $("act-cancel-raise").style.display = "";
+
+  // Requirement #9: min > max тохиолдолд (жишээ нь тоглогч зөвхөн
+  // min-raise-ээс бага хэмжээгээр л all-in хийж чадна) slider-ийг харуулахгүй,
+  // зөвхөн All-in боломжтой гэдгийг мэдэгдэнэ (доод action-bar-ын All-in
+  // товчийг дахин харуулна).
+  if (min > max) {
+    hide($("raise-panel"));
+    hide($("raise-presets"));
+    show($("raise-only-allin-note"));
+    $("act-confirm-raise").style.display = "none";
+    $("act-allin").style.display = legal.canAllIn ? "" : "none";
+    return;
+  }
+
+  const slider = $("raise-slider");
+  slider.min = String(min);
+  slider.max = String(max);
+  slider.value = String(min);
+  updateRaiseDisplay();
+  show($("raise-panel"));
+  show($("raise-presets"));
+  $("act-confirm-raise").style.display = "";
 };
 
 $("act-cancel-raise").onclick = () => renderActionBar(state.gameState);
@@ -1307,56 +1590,99 @@ $("act-confirm-raise").onclick = () => {
 
 $("raise-slider").addEventListener("input", updateRaiseDisplay);
 function updateRaiseDisplay() {
-  setText($("raise-amount-display"), $("raise-slider").value);
+  const gs = state.gameState;
+  let v = parseInt($("raise-slider").value, 10);
+  if (gs && gs.legalActions) {
+    // Requirement #9: slider-ийн утгыг min/max-аас гадуур гарахгүйгээр бэхжүүлнэ.
+    v = Math.max(gs.legalActions.minimumRaiseTo, Math.min(v, gs.legalActions.maximumRaiseTo));
+    $("raise-slider").value = String(v);
+  }
+  setText($("raise-amount-display"), String(v));
 }
 
+// Requirement #11: "пот-хэмжээст raise" = (дуудах дүн) + (дуудсаны дараах
+// пот) * fraction — зөвхөн pot-ийг шууд үржих биш, эхлээд дуудах дүнг
+// оруулж тооцно. raiseTo (нийт street bet) = currentBet + fraction*(pot+callAmount).
 function presetRaiseTo(fraction) {
   const gs = state.gameState;
   if (!gs || !gs.hand) return 0;
   const legal = gs.legalActions;
-  const target = Math.round((gs.hand.pot || 0) * fraction);
-  return Math.max(legal.minimumRaiseTo, Math.min(target, legal.maximumRaiseTo));
+  const pot = gs.hand.pot || 0;
+  const callAmount = legal.callAmount || 0;
+  const currentBet = gs.hand.currentBet || 0;
+  const potAfterCall = pot + callAmount;
+  const raiseTo = currentBet + Math.round(potAfterCall * fraction);
+  return Math.max(legal.minimumRaiseTo, Math.min(raiseTo, legal.maximumRaiseTo));
 }
 $("preset-half").onclick = () => { $("raise-slider").value = presetRaiseTo(0.5); updateRaiseDisplay(); };
 $("preset-threequarter").onclick = () => { $("raise-slider").value = presetRaiseTo(0.75); updateRaiseDisplay(); };
 $("preset-pot").onclick = () => { $("raise-slider").value = presetRaiseTo(1); updateRaiseDisplay(); };
-$("preset-allin").onclick = () => {
-  const gs = state.gameState;
-  if (!gs) return;
-  $("raise-slider").value = gs.legalActions.maximumRaiseTo;
-  updateRaiseDisplay();
-};
 
 async function submitAction(action, raiseTo) {
   const gs = state.gameState;
   if (!gs || !gs.hand) return;
   $("action-buttons").querySelectorAll("button").forEach((b) => (b.disabled = true));
+  $("act-confirm-raise").disabled = true;
   try {
-    const { error } = await sb.rpc("submit_poker_action_v1", {
+    const { error } = await sb.rpc("submit_poker_action_v2", {
       p_game_id: state.currentGameId,
       p_hand_id: gs.hand.id,
       p_action: action,
       p_raise_to: raiseTo ?? null,
+      // Requirement #1: сервер дэх stateVersion-той таарч байгаа эсэхийг
+      // шалгуулна (optimistic concurrency).
+      p_expected_version: gs.hand.stateVersion ?? null,
       p_idempotency_key: crypto.randomUUID(),
     });
-    if (error) throw error;
+    if (error) {
+      if (isNetworkError(error)) {
+        reportNetworkTrouble();
+        return;
+      }
+      clearNetworkTrouble();
+      if (error.message === "STATE_VERSION_MISMATCH") {
+        toast(friendlyError(error), "error");
+        // Requirement #1: хуучирсан үйлдлийг ДАХИН оролдохгүй — зөвхөн
+        // төлөвийг шинээр татна.
+        await refreshGameState();
+        return;
+      }
+      throw error;
+    }
+    clearNetworkTrouble();
     await refreshGameState();
   } catch (err) {
-    toast(friendlyError(err), "error");
+    if (isNetworkError(err)) reportNetworkTrouble();
+    else toast(friendlyError(err), "error");
     await refreshGameState();
   } finally {
     $("action-buttons").querySelectorAll("button").forEach((b) => (b.disabled = false));
+    $("act-confirm-raise").disabled = false;
   }
 }
 
 $("next-hand-btn").onclick = async () => {
   $("next-hand-btn").disabled = true;
   try {
-    const { error } = await sb.rpc("advance_to_next_hand_v1", { p_game_id: state.currentGameId });
+    const gs = state.gameState;
+    const { data, error } = await sb.rpc("advance_to_next_hand_v2", {
+      p_game_id: state.currentGameId,
+      p_completed_hand_id: gs && gs.hand ? gs.hand.id : null,
+    });
     if (error) throw error;
+    // "stale" бол зүгээр л дахин татна — алдаа биш (requirement: v2 RPC хэсэг).
+    if (data && data.stale) {
+      await refreshGameState();
+      return;
+    }
+    if (data && data.gameFinished) {
+      await showGameFinishedScreen();
+      return;
+    }
     await refreshGameState();
   } catch (err) {
-    toast(friendlyError(err), "error");
+    if (isNetworkError(err)) reportNetworkTrouble();
+    else toast(friendlyError(err), "error");
   } finally {
     $("next-hand-btn").disabled = false;
   }
@@ -1365,55 +1691,106 @@ $("next-hand-btn").onclick = async () => {
 $("leave-game-btn").onclick = async () => {
   if (!confirm("Тоглолтоос гарах уу? (Таны ээлж ирэхэд автоматаар фолд/чек хийгдэнэ)")) return;
   try {
-    await sb.rpc("leave_room_v2", { p_room_id: state.currentRoomId });
-  } catch (err) { /* ignore */ }
+    // Requirement #12: шинэ leave_poker_game_v1 RPC ашиглана (хуучин
+    // leave_room_v2-ийн оронд).
+    const { error } = await sb.rpc("leave_poker_game_v1", { p_game_id: state.currentGameId });
+    if (error && !isNetworkError(error)) {
+      toast(friendlyError(error), "error");
+    }
+  } catch (err) {
+    if (isNetworkError(err)) reportNetworkTrouble();
+  }
   unsubscribeGameRealtime();
   state.currentGameId = null;
   state.currentRoomId = null;
+  state.gameState = null;
   screen("lobby-screen");
   refreshLobby();
   subscribeLobbyRealtime();
 };
 
-// Turn timer: action_deadline-ийг ашиглан идэвхтэй тоглогчийн timer-ring-ийг
-// шинэчилнэ. Хугацаа хэтэрвэл дараагийн refresh (poll/realtime) үед сервер
-// "lazy timeout" аргаар автоматаар check/fold хийчихсэн байх тул зүгээр л
-// refresh хийхэд хангалттай.
+// ---------------------------------------------------------------------------
+// Turn timer — requirement #2: fixed 20000ms-ийг устгаж, turnSeconds,
+// serverNow (offset-оор тооцсон), actionDeadline-ийг ашиглана.
+// ---------------------------------------------------------------------------
 function updateTurnTimer() {
   const gs = state.gameState;
   if (!gs || !gs.hand || !gs.hand.actionDeadline || !gs.hand.activeSeat) return;
   const ring = $("timer-ring-" + gs.hand.activeSeat);
   if (!ring) return;
   const deadline = new Date(gs.hand.actionDeadline).getTime();
-  const totalMs = 20000; // серверийн жишиг turn_seconds-тай ойролцоо, зөвхөн UI-д
-  const remaining = deadline - Date.now();
+  const totalMs = (gs.hand.turnSeconds || 20) * 1000;
+  const nowEstimate = Date.now() + state.serverOffsetMs; // серверийн "одоо" цагийн ойролцоо тооцоо
+  const remaining = deadline - nowEstimate;
   const pct = Math.max(0, Math.min(100, (remaining / totalMs) * 100));
   ring.style.setProperty("--pct", String(pct));
   if (remaining <= 0) {
     // Хугацаа хэтэрсэн — сервер lazy timeout-оор шийднэ, бид зүгээр дахин татна.
-    refreshGameState();
+    triggerRefreshGameState();
   }
 }
 
+// ---------------------------------------------------------------------------
+// REALTIME (requirement #4) — game_id-хамааралтай суваг (poker_hands,
+// game_players, chat_messages) + hand_id-ээр ШҮҮСЭН тусдаа суваг
+// (hand_players, poker_actions, hand_results). Hand солигдоход хуучин
+// hand-суваг арилгаж шинээр subscribe хийнэ — hер table дээр давхацсан
+// subscription хуримтлагдахгүй.
+// ---------------------------------------------------------------------------
 function subscribeGameRealtime() {
-  unsubscribeGameRealtime();
-  state.gameChannel = sb
-    .channel("game-" + state.currentGameId)
-    .on("postgres_changes", { event: "*", schema: "public", table: "poker_hands", filter: `game_id=eq.${state.currentGameId}` }, refreshGameState)
-    .on("postgres_changes", { event: "*", schema: "public", table: "hand_players" }, refreshGameState)
-    .on("postgres_changes", { event: "*", schema: "public", table: "poker_actions" }, refreshGameState)
-    .on("postgres_changes", { event: "*", schema: "public", table: "hand_results" }, refreshGameState)
-    .on("postgres_changes", { event: "*", schema: "public", table: "game_players", filter: `game_id=eq.${state.currentGameId}` }, refreshGameState)
+  unsubscribeGameMainChannel();
+  state.gameChannelMain = sb
+    .channel("game-main-" + state.currentGameId)
+    .on("postgres_changes", { event: "*", schema: "public", table: "poker_hands", filter: `game_id=eq.${state.currentGameId}` }, () => triggerRefreshGameState())
+    .on("postgres_changes", { event: "*", schema: "public", table: "game_players", filter: `game_id=eq.${state.currentGameId}` }, () => triggerRefreshGameState())
     .on("postgres_changes", { event: "*", schema: "public", table: "chat_messages", filter: `room_id=eq.${state.currentRoomId}` }, refreshGameChat)
-    .subscribe();
-  state.gamePollInterval = setInterval(refreshGameState, 2500);
+    .subscribe((status) => {
+      // Дахин холбогдоход (reconnect) үргэлж бүрэн, эрх бүхий (authoritative)
+      // get_poker_state_v2 дуудлага хийнэ — incremental realtime дельта дээр
+      // л найдахгүй.
+      if (status === "SUBSCRIBED") triggerRefreshGameState();
+    });
+  state.gamePollInterval = setInterval(() => triggerRefreshGameState(), 2500);
   state.gameTimerInterval = setInterval(updateTurnTimer, 300);
   refreshGameChat();
+
+  document.addEventListener("visibilitychange", onGameVisibilityChange);
 }
-function unsubscribeGameRealtime() {
-  if (state.gameChannel) { sb.removeChannel(state.gameChannel); state.gameChannel = null; }
+
+function onGameVisibilityChange() {
+  if (document.visibilityState === "visible" && state.currentGameId) {
+    triggerRefreshGameState();
+  }
+}
+
+function subscribeHandChannel(handId) {
+  unsubscribeGameHandChannel();
+  state.subscribedHandId = handId;
+  if (!handId) return;
+  state.gameChannelHand = sb
+    .channel("game-hand-" + handId)
+    .on("postgres_changes", { event: "*", schema: "public", table: "hand_players", filter: `hand_id=eq.${handId}` }, () => triggerRefreshGameState())
+    .on("postgres_changes", { event: "*", schema: "public", table: "poker_actions", filter: `hand_id=eq.${handId}` }, () => triggerRefreshGameState())
+    .on("postgres_changes", { event: "*", schema: "public", table: "hand_results", filter: `hand_id=eq.${handId}` }, () => triggerRefreshGameState())
+    .subscribe((status) => {
+      if (status === "SUBSCRIBED") triggerRefreshGameState();
+    });
+}
+
+function unsubscribeGameMainChannel() {
+  if (state.gameChannelMain) { sb.removeChannel(state.gameChannelMain); state.gameChannelMain = null; }
   if (state.gamePollInterval) { clearInterval(state.gamePollInterval); state.gamePollInterval = null; }
   if (state.gameTimerInterval) { clearInterval(state.gameTimerInterval); state.gameTimerInterval = null; }
+  document.removeEventListener("visibilitychange", onGameVisibilityChange);
+}
+function unsubscribeGameHandChannel() {
+  if (state.gameChannelHand) { sb.removeChannel(state.gameChannelHand); state.gameChannelHand = null; }
+  state.subscribedHandId = null;
+}
+function unsubscribeGameRealtime() {
+  unsubscribeGameMainChannel();
+  unsubscribeGameHandChannel();
+  if (state.gameStateDebounceTimer) { clearTimeout(state.gameStateDebounceTimer); state.gameStateDebounceTimer = null; }
 }
 
 // ---------------------------------------------------------------------------
@@ -1457,7 +1834,7 @@ async function sendGameChat() {
 }
 
 // ---------------------------------------------------------------------------
-// REALTIME
+// REALTIME — Room / Lobby
 // ---------------------------------------------------------------------------
 // Тайлбар: "rooms" table-д password_hash баганыг client-ээс нуухын тулд
 // зөвхөн ХЭСЭГЧИЛСЭН (баганы түвшний) SELECT grant "authenticated" role-д
@@ -1536,10 +1913,22 @@ async function init() {
     if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
       if (!state.session || state.session.user.id !== session.user.id) onAuthed(session);
       state.session = session;
+      // Requirement #4: sign-in дахин баталгаажих (token refresh /
+      // reconnect) бүрд, тоглоомын дэлгэц дээр байгаа бол authoritative
+      // дахин татна.
+      if (event === "TOKEN_REFRESHED" && state.currentGameId) {
+        triggerRefreshGameState();
+      }
     } else if (event === "SIGNED_OUT") {
       onSignedOut();
     }
   });
+
+  window.addEventListener("online", () => {
+    clearNetworkTrouble();
+    if (state.currentGameId) triggerRefreshGameState();
+  });
+  window.addEventListener("offline", () => reportNetworkTrouble());
 
   const { data: { session } } = await sb.auth.getSession();
   if (session) {
