@@ -140,6 +140,170 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   a { color: var(--gold-light); }
   .link-btn { background: none; border: none; color: var(--gold-light); text-decoration: underline; padding: 0; font-size: 13px; }
+
+  /* ==========================================================================
+     GAME SCREEN — Texas Hold'em ширээ
+     ========================================================================== */
+  #game-screen { display: flex; flex-direction: column; height: 100dvh; height: 100vh; overflow: hidden; }
+  .game-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 14px; padding-top: max(8px, env(safe-area-inset-top));
+    background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 5;
+  }
+  .game-topbar .brand { font-weight: 800; color: var(--gold); font-size: 14px; letter-spacing: 1px; }
+  .game-topbar .game-meta { font-size: 12px; color: var(--text-dim); display: flex; gap: 10px; align-items: center; }
+  .game-topbar .chips-badge { font-size: 12px; }
+
+  .table-wrap {
+    flex: 1; position: relative; min-height: 0;
+    display: flex; align-items: center; justify-content: center;
+    padding: 10px;
+    background: radial-gradient(ellipse at 50% 40%, #14202a 0%, #0a1218 75%);
+  }
+  .felt {
+    position: relative; width: min(94vw, 720px); aspect-ratio: 16 / 10; max-height: 62vh;
+    background: radial-gradient(ellipse at 50% 40%, #1c5c40 0%, #0f3a28 70%, #0a2a1c 100%);
+    border: 10px solid #3a2412; border-radius: 46% / 60%;
+    box-shadow: inset 0 0 60px rgba(0,0,0,0.55), 0 10px 30px rgba(0,0,0,0.5);
+  }
+  .pot-display {
+    position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
+    text-align: center; z-index: 3;
+  }
+  .pot-display .pot-amount { background: rgba(0,0,0,0.45); border: 1px solid var(--gold); border-radius: 999px; padding: 5px 16px; color: var(--gold-light); font-weight: 700; font-size: 14px; }
+  .community-cards { display: flex; gap: 5px; justify-content: center; margin-top: 10px; min-height: 46px; }
+  .hand-result-banner {
+    position: absolute; top: 8%; left: 50%; transform: translateX(-50%);
+    background: rgba(10, 16, 22, 0.92); border: 1px solid var(--gold); border-radius: 10px;
+    padding: 8px 16px; font-size: 12px; text-align: center; max-width: 90%; z-index: 6; color: var(--gold-light);
+  }
+
+  .card {
+    width: 32px; height: 46px; border-radius: 5px; background: #f4f1e8; color: #111;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 15px; line-height: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.4); flex-shrink: 0;
+    border: 1px solid rgba(0,0,0,0.15);
+  }
+  .card.small { width: 24px; height: 34px; font-size: 11px; border-radius: 4px; }
+  .card .suit { font-size: 0.85em; margin-top: 1px; }
+  .card.red { color: #c0392b; }
+  .card.black { color: #16181a; }
+  .card.back {
+    background: repeating-linear-gradient(45deg, #6f2b2b, #6f2b2b 4px, #832f2f 4px, #832f2f 8px);
+    border: 1px solid #4a1c1c;
+  }
+  .card.placeholder { background: rgba(255,255,255,0.06); box-shadow: none; border: 1px dashed rgba(255,255,255,0.15); }
+  .hole-cards { display: flex; gap: 3px; justify-content: center; }
+
+  .seat-pos {
+    position: absolute; width: 108px; margin-left: -54px; margin-top: -38px;
+    display: flex; flex-direction: column; align-items: center; z-index: 4;
+  }
+  .seat-pos .seat-card {
+    background: rgba(15, 20, 26, 0.9); border: 1px solid var(--border); border-radius: 10px;
+    padding: 6px 8px; text-align: center; width: 100%; position: relative;
+    transition: box-shadow 0.2s, border-color 0.2s;
+  }
+  .seat-pos.active-turn .seat-card { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold), 0 0 16px rgba(212,175,55,0.5); }
+  .seat-pos.folded .seat-card { opacity: 0.4; }
+  .seat-pos .seat-name { font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .seat-pos .seat-stack { font-size: 11px; color: var(--gold-light); margin-top: 1px; }
+  .seat-pos .seat-tags { display: flex; gap: 3px; justify-content: center; margin-top: 2px; }
+  .seat-tag { font-size: 9px; padding: 1px 5px; border-radius: 999px; font-weight: 700; }
+  .seat-tag.dealer { background: #d4af37; color: #1a1305; }
+  .seat-tag.sb { background: #3498db; color: #06131f; }
+  .seat-tag.bb { background: #e67e22; color: #1f1005; }
+  .seat-pos .bet-chip {
+    position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.55); border: 1px solid var(--gold-light); color: var(--gold-light);
+    font-size: 10px; padding: 1px 7px; border-radius: 999px; white-space: nowrap;
+  }
+  .seat-pos .seat-action-badge {
+    position: absolute; top: -10px; right: -6px; font-size: 9px; padding: 2px 6px; border-radius: 999px;
+    background: var(--panel-2); border: 1px solid var(--border); color: var(--text-dim); text-transform: uppercase;
+  }
+  .seat-pos .seat-action-badge.fold { color: var(--red); }
+  .seat-pos .seat-action-badge.call, .seat-pos .seat-action-badge.check { color: var(--green); }
+  .seat-pos .seat-action-badge.raise, .seat-pos .seat-action-badge.bet, .seat-pos .seat-action-badge.all_in { color: var(--gold-light); }
+  .seat-pos .my-hole { margin-top: 4px; }
+  .timer-ring {
+    position: absolute; top: -8px; left: -8px; width: calc(100% + 16px); height: calc(100% + 16px);
+    border-radius: 12px; pointer-events: none;
+    background: conic-gradient(var(--gold) calc(var(--pct, 100) * 1%), transparent 0);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+  }
+
+  /* Seat position layout for up to 8 seats around the oval, by seat count */
+  .seat-pos[data-n="2"][data-i="0"] { top: 88%; left: 50%; }
+  .seat-pos[data-n="2"][data-i="1"] { top: 4%; left: 50%; }
+  .seat-pos[data-n="3"][data-i="0"] { top: 88%; left: 50%; }
+  .seat-pos[data-n="3"][data-i="1"] { top: 28%; left: 6%; }
+  .seat-pos[data-n="3"][data-i="2"] { top: 28%; left: 94%; }
+  .seat-pos[data-n="4"][data-i="0"] { top: 88%; left: 50%; }
+  .seat-pos[data-n="4"][data-i="1"] { top: 50%; left: 2%; }
+  .seat-pos[data-n="4"][data-i="2"] { top: 4%; left: 50%; }
+  .seat-pos[data-n="4"][data-i="3"] { top: 50%; left: 98%; }
+  .seat-pos[data-n="5"][data-i="0"] { top: 88%; left: 50%; }
+  .seat-pos[data-n="5"][data-i="1"] { top: 62%; left: 2%; }
+  .seat-pos[data-n="5"][data-i="2"] { top: 8%; left: 22%; }
+  .seat-pos[data-n="5"][data-i="3"] { top: 8%; left: 78%; }
+  .seat-pos[data-n="5"][data-i="4"] { top: 62%; left: 98%; }
+  .seat-pos[data-n="6"][data-i="0"] { top: 88%; left: 50%; }
+  .seat-pos[data-n="6"][data-i="1"] { top: 62%; left: 2%; }
+  .seat-pos[data-n="6"][data-i="2"] { top: 8%; left: 14%; }
+  .seat-pos[data-n="6"][data-i="3"] { top: 4%; left: 50%; }
+  .seat-pos[data-n="6"][data-i="4"] { top: 8%; left: 86%; }
+  .seat-pos[data-n="6"][data-i="5"] { top: 62%; left: 98%; }
+  .seat-pos[data-n="7"][data-i="0"] { top: 88%; left: 50%; }
+  .seat-pos[data-n="7"][data-i="1"] { top: 70%; left: 0%; }
+  .seat-pos[data-n="7"][data-i="2"] { top: 28%; left: 4%; }
+  .seat-pos[data-n="7"][data-i="3"] { top: 4%; left: 32%; }
+  .seat-pos[data-n="7"][data-i="4"] { top: 4%; left: 68%; }
+  .seat-pos[data-n="7"][data-i="5"] { top: 28%; left: 96%; }
+  .seat-pos[data-n="7"][data-i="6"] { top: 70%; left: 100%; }
+  .seat-pos[data-n="8"][data-i="0"] { top: 88%; left: 50%; }
+  .seat-pos[data-n="8"][data-i="1"] { top: 70%; left: 0%; }
+  .seat-pos[data-n="8"][data-i="2"] { top: 30%; left: 2%; }
+  .seat-pos[data-n="8"][data-i="3"] { top: 4%; left: 26%; }
+  .seat-pos[data-n="8"][data-i="4"] { top: 4%; left: 74%; }
+  .seat-pos[data-n="8"][data-i="5"] { top: 30%; left: 98%; }
+  .seat-pos[data-n="8"][data-i="6"] { top: 70%; left: 100%; }
+  .seat-pos[data-n="8"][data-i="7"] { top: 88%; left: 82%; }
+
+  .action-bar {
+    flex-shrink: 0; background: var(--panel); border-top: 1px solid var(--border);
+    padding: 10px 12px; padding-bottom: max(10px, env(safe-area-inset-bottom)); z-index: 5;
+  }
+  .action-bar .my-turn-note { text-align: center; font-size: 12px; color: var(--gold-light); margin-bottom: 8px; }
+  .action-buttons { display: flex; gap: 8px; }
+  .action-buttons button { flex: 1; min-height: 44px; font-size: 13px; }
+  .raise-panel { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .raise-panel input[type="range"] { flex: 1; accent-color: var(--gold); height: 44px; }
+  .raise-panel .raise-amount { min-width: 70px; text-align: right; font-weight: 700; color: var(--gold-light); font-size: 14px; }
+  .raise-presets { display: flex; gap: 6px; margin-bottom: 8px; }
+  .raise-presets button { flex: 1; padding: 6px; font-size: 11px; min-height: 32px; }
+  .not-my-turn-note { text-align: center; font-size: 12px; color: var(--text-dim); padding: 8px 0; }
+
+  .game-chat-toggle { position: absolute; top: 8px; right: 10px; z-index: 6; }
+  .game-chat-drawer {
+    position: fixed; inset: 0; background: rgba(5,8,11,0.7); z-index: 20;
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  .game-chat-drawer .drawer-panel {
+    background: var(--panel); border-top: 1px solid var(--border); border-radius: 14px 14px 0 0;
+    width: 100%; max-width: 480px; height: 60vh; display: flex; flex-direction: column; padding: 12px;
+  }
+  .next-hand-banner {
+    position: absolute; bottom: 6%; left: 50%; transform: translateX(-50%); z-index: 6;
+  }
+
+  @media (max-width: 480px) {
+    .felt { max-height: 56vh; }
+    .card { width: 28px; height: 40px; font-size: 13px; }
+    .seat-pos { width: 84px; margin-left: -42px; margin-top: -30px; }
+    .seat-pos .seat-name { font-size: 10px; }
+  }
 </style>
 </head>
 <body>
@@ -338,6 +502,70 @@
   </main>
 </div>
 
+<!-- ============ GAME SCREEN (Texas Hold'em ширээ) ============ -->
+<div id="game-screen" class="screen hidden">
+  <div class="game-topbar">
+    <div class="brand">KHAN POKER</div>
+    <div class="game-meta">
+      <span>Гар #<span id="game-hand-number">0</span></span>
+      <span id="game-blinds">10/20</span>
+      <span class="chips-badge">🪙 <span id="game-my-stack">0</span></span>
+      <button class="secondary" id="leave-game-btn" style="padding:4px 10px; font-size:12px;">Гарах</button>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <button class="secondary game-chat-toggle" id="game-chat-toggle" style="padding:6px 10px; font-size:12px;">💬</button>
+    <div class="felt" id="felt">
+      <div class="pot-display">
+        <div class="pot-amount">Банк: <span id="game-pot">0</span></div>
+        <div class="community-cards" id="community-cards"></div>
+      </div>
+      <div id="hand-result-banner" class="hand-result-banner hidden"></div>
+      <div id="seats-container"></div>
+      <div id="next-hand-banner" class="next-hand-banner hidden">
+        <button class="primary" id="next-hand-btn">Дараагийн гар</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="action-bar" id="action-bar">
+    <div id="my-turn-note" class="my-turn-note hidden">Таны ээлж байна</div>
+    <div id="raise-panel" class="raise-panel hidden">
+      <input type="range" id="raise-slider" min="0" max="0" step="1" />
+      <div class="raise-amount"><span id="raise-amount-display">0</span></div>
+    </div>
+    <div id="raise-presets" class="raise-presets hidden">
+      <button class="secondary" id="preset-half">½ банк</button>
+      <button class="secondary" id="preset-threequarter">¾ банк</button>
+      <button class="secondary" id="preset-pot">Пот</button>
+      <button class="secondary" id="preset-allin">All-in</button>
+    </div>
+    <div class="action-buttons" id="action-buttons">
+      <button class="danger" id="act-fold">Фолд</button>
+      <button class="secondary" id="act-check">Чек</button>
+      <button class="secondary" id="act-call">Колл</button>
+      <button class="primary" id="act-bet-raise">Бэт</button>
+      <button class="success" id="act-confirm-raise" style="display:none;">Батлах</button>
+      <button class="secondary" id="act-cancel-raise" style="display:none;">Цуцлах</button>
+    </div>
+    <div id="not-my-turn-note" class="not-my-turn-note">Хүлээж байна…</div>
+  </div>
+</div>
+
+<div id="game-chat-drawer" class="game-chat-drawer hidden">
+  <div class="drawer-panel">
+    <h3 style="margin:0 0 10px; font-size:14px; color: var(--text-dim); display:flex; justify-content:space-between;">
+      Чат <button class="link-btn" id="game-chat-close">Хаах ✕</button>
+    </h3>
+    <div class="chat-messages" id="game-chat-messages"></div>
+    <div class="chat-input-row">
+      <input type="text" id="game-chat-input" maxlength="300" placeholder="Мессеж бичих..." />
+      <button class="primary" id="game-chat-send-btn">→</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast-container"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -399,6 +627,16 @@ function friendlyError(err) {
     SEAT_TAKEN: "Энэ суудлыг өөр тоглогч эзэлсэн байна.",
     RATE_LIMITED: "Хэт олон мессеж бичлээ. Түр хүлээгээрэй.",
     "Invalid login credentials": "И-мэйл эсвэл нууц үг буруу байна.",
+    GAME_NOT_FOUND: "Тоглоом олдсонгүй.",
+    HAND_NOT_FOUND: "Гар олдсонгүй.",
+    HAND_NOT_ACTIVE: "Энэ гарын үйлдэл хийх боломжгүй төлөвт байна.",
+    NOT_YOUR_TURN: "Таны ээлж биш байна.",
+    NOT_IN_HAND: "Та энэ гарт оролцохгүй байна.",
+    INVALID_ACTION: "Буруу үйлдэл.",
+    ILLEGAL_ACTION: "Энэ үйлдлийг одоо хийх боломжгүй.",
+    INVALID_RAISE_AMOUNT: "Raise-ийн хэмжээ буруу байна.",
+    RAISE_TOO_LOW: "Raise хамгийн багадаа минимум хэмжээнээс их байх ёстой.",
+    NOT_ENOUGH_STACK: "Таны жетон хүрэлцэхгүй байна.",
   };
   return map[msg] || msg;
 }
@@ -415,10 +653,19 @@ const state = {
   roomData: null,
   players: [],
   messages: [],
+  // game screen
+  currentGameId: null,
+  gameChannel: null,
+  gamePollInterval: null,
+  gameTimerInterval: null,
+  gameState: null, // last result of get_poker_state_v1
+  gameMessages: [],
+  raiseAmount: 0,
+  raiseMode: false,
 };
 
 function screen(name) {
-  ["config-screen", "auth-screen", "lobby-screen", "room-screen"].forEach((id) => hide($(id)));
+  ["config-screen", "auth-screen", "lobby-screen", "room-screen", "game-screen"].forEach((id) => hide($(id)));
   show($(name));
 }
 
@@ -681,13 +928,17 @@ function renderRoom() {
   const myPlayer = state.players.find((p) => p.user_id === me);
   const isHost = myPlayer && myPlayer.is_host;
 
+  if (room.status === "in_game" || room.status === "starting") {
+    // Тоглолт эхэлсэн — ширээний дэлгэц рүү шилжинэ.
+    enterGame(room.id);
+    return;
+  }
+
   setText($("room-name-title"), room.name);
   setText($("room-code-display"), room.code);
 
   if (room.status !== "waiting") {
     $("room-status-note").textContent =
-      room.status === "starting" ? "Тоглолт эхэллээ! (Ширээний тоглолтын дэлгэц одоогоор хөгжүүлэгдэж байна.)" :
-      room.status === "in_game" ? "Тоглолт явагдаж байна." :
       room.status === "finished" ? "Тоглолт дууссан." : "Өрөө хаагдсан.";
     show($("room-status-note"));
   } else {
@@ -784,11 +1035,16 @@ $("ready-toggle-btn").onclick = async () => {
 };
 
 $("start-game-btn").onclick = async () => {
+  $("start-game-btn").disabled = true;
   try {
-    const { error } = await sb.rpc("start_room_game_v2", { p_room_id: state.currentRoomId });
+    const { error } = await sb.rpc("start_poker_game_v1", { p_room_id: state.currentRoomId });
     if (error) throw error;
     toast("Тоглолт эхэллээ!", "success");
-  } catch (err) { toast(friendlyError(err), "error"); }
+    await enterGame(state.currentRoomId);
+  } catch (err) {
+    toast(friendlyError(err), "error");
+    $("start-game-btn").disabled = false;
+  }
 };
 
 async function kickPlayer(targetUserId) {
@@ -834,6 +1090,369 @@ async function sendChat() {
   try {
     const { error } = await sb.rpc("send_room_chat_v2", { p_room_id: state.currentRoomId, p_message: text });
     if (error) throw error;
+  } catch (err) { toast(friendlyError(err), "error"); }
+}
+
+// ---------------------------------------------------------------------------
+// GAME SCREEN — Texas Hold'em ширээ
+// ---------------------------------------------------------------------------
+const SUIT_SYMBOL = { s: "♠", h: "♥", d: "♦", c: "♣" };
+const SUIT_COLOR = { s: "black", h: "red", d: "red", c: "black" };
+
+function cardHtml(code, size) {
+  // code жишээ нь: "As", "Td", "9h", "2c"
+  const rank = code.slice(0, -1);
+  const suit = code.slice(-1);
+  const cls = "card" + (size === "small" ? " small" : "") + " " + (SUIT_COLOR[suit] || "black");
+  return `<div class="${cls}"><div>${escapeHtml(rank)}</div><div class="suit">${SUIT_SYMBOL[suit] || suit}</div></div>`;
+}
+function cardBackHtml(size) {
+  return `<div class="card back${size === "small" ? " small" : ""}"></div>`;
+}
+function cardPlaceholderHtml(size) {
+  return `<div class="card placeholder${size === "small" ? " small" : ""}"></div>`;
+}
+
+async function enterGame(roomId) {
+  state.currentRoomId = roomId;
+  const { data: game, error } = await sb.from("games").select("id").eq("room_id", roomId).maybeSingle();
+  if (error || !game) {
+    toast("Тоглоомын мэдээлэл олдсонгүй.", "error");
+    return backToLobby();
+  }
+  state.currentGameId = game.id;
+  unsubscribeRoomRealtime();
+  screen("game-screen");
+  await refreshGameState();
+  subscribeGameRealtime();
+}
+
+async function refreshGameState() {
+  if (!state.currentGameId) return;
+  const { data, error } = await sb.rpc("get_poker_state_v1", { p_game_id: state.currentGameId });
+  if (error) {
+    if (error.message === "GAME_NOT_FOUND" || error.message === "UNAUTHORIZED") {
+      toast("Тоглоом дууссан эсвэл олдсонгүй.", "error");
+      return backToLobby();
+    }
+    console.error(error);
+    return;
+  }
+  state.gameState = data;
+  renderGame();
+}
+
+function renderGame() {
+  const gs = state.gameState;
+  if (!gs) return;
+  const me = state.session.user.id;
+
+  setText($("game-hand-number"), gs.game.handNumber ?? 0);
+  setText($("game-blinds"), `${gs.game.smallBlind}/${gs.game.bigBlind}`);
+  const myEntry = gs.players.find((p) => p.userId === me);
+  setText($("game-my-stack"), (myEntry ? myEntry.stack : state.profile?.chips ?? 0));
+
+  const hand = gs.hand;
+  const seatsContainer = $("seats-container");
+  seatsContainer.innerHTML = "";
+  hide($("hand-result-banner"));
+  hide($("next-hand-banner"));
+
+  if (!hand) {
+    setText($("game-pot"), 0);
+    $("community-cards").innerHTML = "";
+    renderActionBar(gs);
+    return;
+  }
+
+  setText($("game-pot"), hand.pot);
+  $("community-cards").innerHTML = (hand.communityCards || []).map((c) => cardHtml(c)).join("");
+
+  const n = gs.players.length;
+  // Тоглогчдын жагсаалтыг ЭЭЛЖИЙН дараалалтай тааруулж, "миний суудал"
+  // ХАМГИЙН ДООД (top:88%) байрлалд байрлуулна — бусад тоглогч цагийн зүү
+  // дагуу эргэн харагдана.
+  const myIdx = gs.players.findIndex((p) => p.userId === me);
+  const order = myIdx >= 0
+    ? gs.players.slice(myIdx).concat(gs.players.slice(0, myIdx))
+    : gs.players;
+
+  order.forEach((p, i) => {
+    const el = document.createElement("div");
+    el.className = "seat-pos" + (p.status === "folded" ? " folded" : "") + (hand.activeSeat === p.seatNumber && hand.phase !== "complete" ? " active-turn" : "");
+    el.dataset.n = String(n);
+    el.dataset.i = String(i);
+
+    const tags = [];
+    if (p.isDealer) tags.push('<span class="seat-tag dealer">D</span>');
+    if (p.isSmallBlind) tags.push('<span class="seat-tag sb">SB</span>');
+    if (p.isBigBlind) tags.push('<span class="seat-tag bb">BB</span>');
+
+    let holeHtml = "";
+    if (p.userId === me && gs.myHoleCards && gs.myHoleCards.length) {
+      holeHtml = `<div class="hole-cards my-hole">${gs.myHoleCards.map((c) => cardHtml(c, "small")).join("")}</div>`;
+    } else if (p.revealedCards && p.revealedCards.length) {
+      holeHtml = `<div class="hole-cards my-hole">${p.revealedCards.map((c) => cardHtml(c, "small")).join("")}</div>`;
+    } else if (p.holeCardCount > 0 && p.status !== "folded") {
+      holeHtml = `<div class="hole-cards my-hole">${cardBackHtml("small")}${cardBackHtml("small")}</div>`;
+    }
+
+    const isActiveNow = hand.activeSeat === p.seatNumber && hand.phase !== "complete" && !["complete","settlement"].includes(hand.phase);
+    const timerRing = isActiveNow ? `<div class="timer-ring" id="timer-ring-${p.seatNumber}"></div>` : "";
+
+    el.innerHTML = `
+      <div class="seat-card">
+        ${timerRing}
+        <div class="seat-name">${escapeHtml(p.displayName)}</div>
+        <div class="seat-stack">🪙 ${p.stack}</div>
+        <div class="seat-tags">${tags.join("")}</div>
+        ${p.lastAction ? `<div class="seat-action-badge ${p.lastAction}">${actionLabel(p.lastAction)}</div>` : ""}
+        ${p.streetBet > 0 ? `<div class="bet-chip">${p.streetBet}</div>` : ""}
+      </div>
+      ${holeHtml}
+    `;
+    seatsContainer.appendChild(el);
+  });
+
+  if (hand.phase === "complete" && gs.handResults && gs.handResults.length) {
+    const lines = gs.handResults.map((r) => {
+      const names = r.winnerUserIds.map((uid) => {
+        const pl = gs.players.find((p) => p.userId === uid);
+        return pl ? pl.displayName : "?";
+      });
+      const desc = r.isFoldWin ? "фолдоор ялсан" : (r.winningDescription || "");
+      return `${names.join(", ")} — ${r.amount} 🪙 (${desc})`;
+    });
+    $("hand-result-banner").innerHTML = lines.join("<br/>");
+    show($("hand-result-banner"));
+    show($("next-hand-banner"));
+  }
+
+  renderActionBar(gs);
+  updateTurnTimer();
+}
+
+function actionLabel(a) {
+  const map = { fold: "Фолд", check: "Чек", call: "Колл", bet: "Бэт", raise: "Рэйз", all_in: "All-in" };
+  return map[a] || a;
+}
+
+function renderActionBar(gs) {
+  const legal = gs.legalActions || {};
+  state.raiseMode = false;
+  hide($("raise-panel"));
+  hide($("raise-presets"));
+  $("act-confirm-raise").style.display = "none";
+  $("act-cancel-raise").style.display = "none";
+
+  if (!gs.hand || gs.hand.phase === "complete" || !gs.isMyTurn) {
+    hide($("my-turn-note"));
+    hide($("action-buttons"));
+    show($("not-my-turn-note"));
+    $("not-my-turn-note").textContent = !gs.hand
+      ? "Гар эхлэхийг хүлээж байна…"
+      : gs.hand.phase === "complete"
+      ? "Гар дууссан."
+      : "Бусад тоглогчийн ээлжийг хүлээж байна…";
+    return;
+  }
+
+  hide($("not-my-turn-note"));
+  show($("my-turn-note"));
+  show($("action-buttons"));
+
+  $("act-fold").style.display = legal.canFold ? "" : "none";
+  $("act-check").style.display = legal.canCheck ? "" : "none";
+  $("act-call").style.display = legal.canCall ? "" : "none";
+  $("act-call").textContent = `Колл ${legal.callAmount}`;
+  $("act-bet-raise").style.display = (legal.canBet || legal.canRaise) ? "" : "none";
+  $("act-bet-raise").textContent = legal.canBet ? "Бэт" : "Нэмэх";
+}
+
+$("act-fold").onclick = () => submitAction("fold");
+$("act-check").onclick = () => submitAction("check");
+$("act-call").onclick = () => submitAction("call");
+
+$("act-bet-raise").onclick = () => {
+  const gs = state.gameState;
+  if (!gs) return;
+  const legal = gs.legalActions;
+  const min = legal.canBet ? Math.min(gs.hand.currentBet || legal.minimumRaiseTo, legal.minimumRaiseTo) : legal.minimumRaiseTo;
+  const max = legal.maximumRaiseTo;
+  state.raiseMode = true;
+  const slider = $("raise-slider");
+  slider.min = String(Math.min(min, max));
+  slider.max = String(max);
+  slider.value = String(Math.min(Math.max(min, min), max));
+  updateRaiseDisplay();
+  show($("raise-panel"));
+  show($("raise-presets"));
+  $("act-fold").style.display = "none";
+  $("act-check").style.display = "none";
+  $("act-call").style.display = "none";
+  $("act-bet-raise").style.display = "none";
+  $("act-confirm-raise").style.display = "";
+  $("act-cancel-raise").style.display = "";
+};
+
+$("act-cancel-raise").onclick = () => renderActionBar(state.gameState);
+
+$("act-confirm-raise").onclick = () => {
+  const gs = state.gameState;
+  const legal = gs.legalActions;
+  const amount = parseInt($("raise-slider").value, 10);
+  const actionType = legal.canBet ? "bet" : "raise";
+  submitAction(actionType, amount);
+};
+
+$("raise-slider").addEventListener("input", updateRaiseDisplay);
+function updateRaiseDisplay() {
+  setText($("raise-amount-display"), $("raise-slider").value);
+}
+
+function presetRaiseTo(fraction) {
+  const gs = state.gameState;
+  if (!gs || !gs.hand) return 0;
+  const legal = gs.legalActions;
+  const target = Math.round((gs.hand.pot || 0) * fraction);
+  return Math.max(legal.minimumRaiseTo, Math.min(target, legal.maximumRaiseTo));
+}
+$("preset-half").onclick = () => { $("raise-slider").value = presetRaiseTo(0.5); updateRaiseDisplay(); };
+$("preset-threequarter").onclick = () => { $("raise-slider").value = presetRaiseTo(0.75); updateRaiseDisplay(); };
+$("preset-pot").onclick = () => { $("raise-slider").value = presetRaiseTo(1); updateRaiseDisplay(); };
+$("preset-allin").onclick = () => {
+  const gs = state.gameState;
+  if (!gs) return;
+  $("raise-slider").value = gs.legalActions.maximumRaiseTo;
+  updateRaiseDisplay();
+};
+
+async function submitAction(action, raiseTo) {
+  const gs = state.gameState;
+  if (!gs || !gs.hand) return;
+  $("action-buttons").querySelectorAll("button").forEach((b) => (b.disabled = true));
+  try {
+    const { error } = await sb.rpc("submit_poker_action_v1", {
+      p_game_id: state.currentGameId,
+      p_hand_id: gs.hand.id,
+      p_action: action,
+      p_raise_to: raiseTo ?? null,
+      p_idempotency_key: crypto.randomUUID(),
+    });
+    if (error) throw error;
+    await refreshGameState();
+  } catch (err) {
+    toast(friendlyError(err), "error");
+    await refreshGameState();
+  } finally {
+    $("action-buttons").querySelectorAll("button").forEach((b) => (b.disabled = false));
+  }
+}
+
+$("next-hand-btn").onclick = async () => {
+  $("next-hand-btn").disabled = true;
+  try {
+    const { error } = await sb.rpc("advance_to_next_hand_v1", { p_game_id: state.currentGameId });
+    if (error) throw error;
+    await refreshGameState();
+  } catch (err) {
+    toast(friendlyError(err), "error");
+  } finally {
+    $("next-hand-btn").disabled = false;
+  }
+};
+
+$("leave-game-btn").onclick = async () => {
+  if (!confirm("Тоглолтоос гарах уу? (Таны ээлж ирэхэд автоматаар фолд/чек хийгдэнэ)")) return;
+  try {
+    await sb.rpc("leave_room_v2", { p_room_id: state.currentRoomId });
+  } catch (err) { /* ignore */ }
+  unsubscribeGameRealtime();
+  state.currentGameId = null;
+  state.currentRoomId = null;
+  screen("lobby-screen");
+  refreshLobby();
+  subscribeLobbyRealtime();
+};
+
+// Turn timer: action_deadline-ийг ашиглан идэвхтэй тоглогчийн timer-ring-ийг
+// шинэчилнэ. Хугацаа хэтэрвэл дараагийн refresh (poll/realtime) үед сервер
+// "lazy timeout" аргаар автоматаар check/fold хийчихсэн байх тул зүгээр л
+// refresh хийхэд хангалттай.
+function updateTurnTimer() {
+  const gs = state.gameState;
+  if (!gs || !gs.hand || !gs.hand.actionDeadline || !gs.hand.activeSeat) return;
+  const ring = $("timer-ring-" + gs.hand.activeSeat);
+  if (!ring) return;
+  const deadline = new Date(gs.hand.actionDeadline).getTime();
+  const totalMs = 20000; // серверийн жишиг turn_seconds-тай ойролцоо, зөвхөн UI-д
+  const remaining = deadline - Date.now();
+  const pct = Math.max(0, Math.min(100, (remaining / totalMs) * 100));
+  ring.style.setProperty("--pct", String(pct));
+  if (remaining <= 0) {
+    // Хугацаа хэтэрсэн — сервер lazy timeout-оор шийднэ, бид зүгээр дахин татна.
+    refreshGameState();
+  }
+}
+
+function subscribeGameRealtime() {
+  unsubscribeGameRealtime();
+  state.gameChannel = sb
+    .channel("game-" + state.currentGameId)
+    .on("postgres_changes", { event: "*", schema: "public", table: "poker_hands", filter: `game_id=eq.${state.currentGameId}` }, refreshGameState)
+    .on("postgres_changes", { event: "*", schema: "public", table: "hand_players" }, refreshGameState)
+    .on("postgres_changes", { event: "*", schema: "public", table: "poker_actions" }, refreshGameState)
+    .on("postgres_changes", { event: "*", schema: "public", table: "hand_results" }, refreshGameState)
+    .on("postgres_changes", { event: "*", schema: "public", table: "game_players", filter: `game_id=eq.${state.currentGameId}` }, refreshGameState)
+    .on("postgres_changes", { event: "*", schema: "public", table: "chat_messages", filter: `room_id=eq.${state.currentRoomId}` }, refreshGameChat)
+    .subscribe();
+  state.gamePollInterval = setInterval(refreshGameState, 2500);
+  state.gameTimerInterval = setInterval(updateTurnTimer, 300);
+  refreshGameChat();
+}
+function unsubscribeGameRealtime() {
+  if (state.gameChannel) { sb.removeChannel(state.gameChannel); state.gameChannel = null; }
+  if (state.gamePollInterval) { clearInterval(state.gamePollInterval); state.gamePollInterval = null; }
+  if (state.gameTimerInterval) { clearInterval(state.gameTimerInterval); state.gameTimerInterval = null; }
+}
+
+// ---------------------------------------------------------------------------
+// GAME CHAT DRAWER (тухайн room-ийн chat_messages-ийг дахин ашиглана)
+// ---------------------------------------------------------------------------
+$("game-chat-toggle").onclick = () => { show($("game-chat-drawer")); refreshGameChat(); };
+$("game-chat-close").onclick = () => hide($("game-chat-drawer"));
+$("game-chat-send-btn").onclick = sendGameChat;
+$("game-chat-input").addEventListener("keydown", (e) => { if (e.key === "Enter") sendGameChat(); });
+
+async function refreshGameChat() {
+  if (!state.currentRoomId) return;
+  const { data } = await sb
+    .from("chat_messages")
+    .select("*, profiles(display_name)")
+    .eq("room_id", state.currentRoomId)
+    .order("created_at", { ascending: true })
+    .limit(100);
+  state.gameMessages = data || [];
+  const box = $("game-chat-messages");
+  box.innerHTML = state.gameMessages
+    .map((m) =>
+      m.message_type === "system"
+        ? `<div class="msg system">${escapeHtml(m.message)}</div>`
+        : `<div class="msg"><span class="who">${escapeHtml(m.profiles?.display_name || "Тоглогч")}:</span> ${escapeHtml(m.message)}</div>`
+    )
+    .join("");
+  box.scrollTop = box.scrollHeight;
+}
+
+async function sendGameChat() {
+  const input = $("game-chat-input");
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = "";
+  try {
+    const { error } = await sb.rpc("send_room_chat_v2", { p_room_id: state.currentRoomId, p_message: text });
+    if (error) throw error;
+    refreshGameChat();
   } catch (err) { toast(friendlyError(err), "error"); }
 }
 
@@ -904,6 +1523,9 @@ function onSignedOut() {
   state.profile = null;
   unsubscribeLobbyRealtime();
   unsubscribeRoomRealtime();
+  unsubscribeGameRealtime();
+  state.currentGameId = null;
+  state.currentRoomId = null;
   screen("auth-screen");
 }
 
