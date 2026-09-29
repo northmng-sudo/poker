@@ -1219,6 +1219,17 @@ async function enterGame(roomId) {
   const { data: game, error } = await sb.from("games").select("id").eq("room_id", roomId).maybeSingle();
   if (error || !game) {
     toast("Тоглоомын мэдээлэл олдсонгүй.", "error");
+    // Засвар: room.status="in_game" ч харгалзах games мөр олдохгүй бол
+    // (жишээ нь хуучин/эвдэрсэн өгөгдөл) зүгээр л лоби руу чимээгүй
+    // буцахгүй — room_players дахь "active" гишүүнчлэлээ цэвэрлэж, ирээдүйд
+    // энэ хэрэглэгч "аль хэдийн өрөөнд байна" гэсэн алдаанд бүү унтарч
+    // үлдээгүй байхаар (self-heal) leave_room_v2-ийг дуудна.
+    try {
+      await sb.rpc("leave_room_v2", { p_room_id: roomId });
+    } catch (_err) {
+      // Алдааг үл тоомсорлоно — цэвэрлэх оролдлого амжилтгүй болсон ч
+      // хэрэглэгчийг лоби руу буцаахад саад болохгүй.
+    }
     return backToLobby();
   }
   state.currentGameId = game.id;
