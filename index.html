@@ -4,6 +4,9 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>KHAN POKER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #0b0f14;
@@ -149,151 +152,350 @@
   }
 
   /* ==========================================================================
-     GAME SCREEN — Texas Hold'em ширээ
+     GAME SCREEN — Texas Hold'em ширээ (premium cinematic casino redesign)
      ========================================================================== */
-  #game-screen { display: flex; flex-direction: column; height: 100dvh; height: 100vh; overflow: hidden; }
-  .game-topbar {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 8px 14px; padding-top: max(8px, env(safe-area-inset-top));
-    background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 5;
+  #game-screen {
+    display: flex; flex-direction: column; height: 100dvh; height: 100vh; overflow: hidden;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background:
+      radial-gradient(ellipse at 50% 36%, rgba(18,62,91,.55), transparent 48%),
+      radial-gradient(ellipse at 50% 100%, rgba(4,39,29,.35), transparent 55%),
+      linear-gradient(180deg, #071427 0%, #030a12 68%, #02060b 100%);
   }
-  .game-topbar .brand { font-weight: 800; color: var(--gold); font-size: 14px; letter-spacing: 1px; }
-  .game-topbar .game-meta { font-size: 12px; color: var(--text-dim); display: flex; gap: 10px; align-items: center; }
-  .game-topbar .chips-badge { font-size: 12px; }
+  .game-topbar {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    height: 56px; min-height: 52px; flex-shrink: 0;
+    padding: 6px 18px; padding-top: max(6px, env(safe-area-inset-top));
+    background: linear-gradient(180deg, #141b24, #0b0f15);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 4px 14px rgba(0,0,0,.4);
+    z-index: 5;
+  }
+  .game-topbar .brand { font-weight: 800; color: var(--gold-light); font-size: 15px; letter-spacing: 1.5px; flex-shrink: 0; }
+  .game-status-strip {
+    display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-dim);
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+    padding: 5px 14px; border-radius: 999px; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; max-width: 52vw;
+  }
+  .game-status-strip b { color: var(--text); font-weight: 700; }
+  .game-status-strip .dot { color: rgba(255,255,255,0.25); }
+  .game-topbar .game-meta { font-size: 12px; color: var(--text-dim); display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
+  .game-topbar .chips-badge { font-size: 13px; font-variant-numeric: tabular-nums; }
 
-  .table-wrap {
+  .poker-stage {
     flex: 1; position: relative; min-height: 0;
     display: flex; align-items: center; justify-content: center;
-    padding: 10px;
-    background: radial-gradient(ellipse at 50% 40%, #14202a 0%, #0a1218 75%);
-  }
-  .felt {
-    position: relative; width: min(94vw, 720px); aspect-ratio: 16 / 10; max-height: 62vh;
-    background: radial-gradient(ellipse at 50% 40%, #1c5c40 0%, #0f3a28 70%, #0a2a1c 100%);
-    border: 10px solid #3a2412; border-radius: 46% / 60%;
-    box-shadow: inset 0 0 60px rgba(0,0,0,0.55), 0 10px 30px rgba(0,0,0,0.5);
-  }
-  .pot-display {
-    position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
-    text-align: center; z-index: 3;
-  }
-  .pot-display .pot-amount { background: rgba(0,0,0,0.45); border: 1px solid var(--gold); border-radius: 999px; padding: 5px 16px; color: var(--gold-light); font-weight: 700; font-size: 14px; }
-  .community-cards { display: flex; gap: 5px; justify-content: center; margin-top: 10px; min-height: 46px; }
-  .hand-result-banner {
-    position: absolute; top: 8%; left: 50%; transform: translateX(-50%);
-    background: rgba(10, 16, 22, 0.92); border: 1px solid var(--gold); border-radius: 10px;
-    padding: 8px 16px; font-size: 12px; text-align: center; max-width: 90%; z-index: 6; color: var(--gold-light);
+    padding: 8px;
+    overflow: hidden;
   }
 
+  .poker-table {
+    position: relative;
+    width: min(86%, 1480px);
+    height: min(80%, 760px);
+    min-height: 280px;
+    border-radius: 50% / 52%;
+    border: clamp(24px, 3.2vw, 58px) solid #14181e;
+    background:
+      radial-gradient(ellipse at 50% 40%, #2a8560 0%, #17553c 55%, #0a2e20 100%);
+    box-shadow:
+      0 36px 70px rgba(0,0,0,.65),
+      0 10px 0 #06080b,
+      inset 0 0 0 3px #c79b3c,
+      inset 0 0 40px rgba(255,255,255,.07);
+  }
+  .poker-table::before {
+    content: "";
+    position: absolute; inset: calc(-1 * clamp(24px, 3.2vw, 58px) - 10px);
+    border-radius: 50% / 52%;
+    box-shadow: inset 0 8px 16px rgba(255,255,255,.08), inset 0 -22px 34px rgba(0,0,0,.75);
+    pointer-events: none;
+  }
+  /* ЗАСВАР: oval betting-line зурлага + fabric noise-ийг ЗӨВХӨН энэ тусдаа
+     чимэглэлийн давхаргад (border-radius+overflow:hidden хамт) байрлуулав.
+     Учир нь border-radius:50%/52% + overflow:hidden хослол нь агуулгыг
+     ЗУУВАН муруйлтад тааруулж таслах тул (жишээ нь 5 community слотын хажуу
+     талын 1-2 слот oval-ийн муруйлтаас гадуур унаж алга болдог байсан) —
+     жинхэнэ агуулга (`.table-felt-inner`) огт overflow:hidden ашиглахгүй. */
+  .table-felt-surface {
+    position: absolute; inset: 4%;
+    border-radius: 50% / 52%;
+    border: 1px solid rgba(255,255,255,0.10);
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .table-felt-inner {
+    position: absolute; inset: 4%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .table-felt-surface::before {
+    /* very subtle fabric noise */
+    content: "";
+    position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0px, transparent 1px, transparent 3px),
+      repeating-linear-gradient(90deg, rgba(0,0,0,0.03) 0px, transparent 1px, transparent 3px);
+    mix-blend-mode: overlay;
+    pointer-events: none;
+  }
+  .felt-watermark {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -46%);
+    text-align: center; line-height: 1; pointer-events: none; user-select: none;
+    font-weight: 800; letter-spacing: 6px;
+    font-size: clamp(20px, 3.6vw, 46px);
+    color: rgba(0,0,0,0.14);
+    text-shadow: 0 1px 0 rgba(255,255,255,0.05);
+  }
+  .felt-watermark span { display: block; }
+
+  .community-zone {
+    position: relative; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: clamp(3px, 0.9vh, 8px);
+    max-width: 78%;
+    /* ЗАСВАР: table-felt-inner дотор яг төв (50%) дээр байрладаг байсан ч
+       өөрийн тоглогчийн pod ("top:86-91%") доод rail дээр байрладаг тул
+       намхан ширээний өндөрт (жижиг viewport) хоёулаа ойртож давхцдаг
+       байлаа ("ТАНЫ ЭЭЛЖ" бичиг avatar дунд гацдаг). Community зурвасыг
+       төвөөс бага зэрэг дээш шилжүүлж байнгын зай гаргав. */
+    transform: translateY(clamp(-38px, -4.6vh, -12px));
+  }
+  .phase-label {
+    font-size: clamp(10px, 1vw, 13px); font-weight: 700; letter-spacing: 3px; color: rgba(255,255,255,0.45);
+    text-transform: uppercase; min-height: 14px;
+  }
+  .pot-display { text-align: center; z-index: 3; }
+  .pot-display .pot-amount {
+    display: inline-flex; flex-direction: column; align-items: center; gap: 1px;
+    background: linear-gradient(180deg, #1b2027, #0a0d12);
+    border: 1px solid var(--gold);
+    border-radius: 14px;
+    padding: 6px 22px;
+    box-shadow: 0 8px 18px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .pot-display .pot-label { font-size: 11px; letter-spacing: 2px; color: var(--text-dim); font-weight: 700; }
+  .pot-display #game-pot { color: var(--gold-light); font-weight: 800; font-size: clamp(18px, 1.6vw, 26px); font-variant-numeric: tabular-nums; }
+  .side-pots { margin-top: 4px; display: flex; flex-direction: column; gap: 2px; align-items: center; }
+  .side-pots .side-pot-line {
+    font-size: 10px; color: var(--text-dim); background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 999px; padding: 1px 10px; font-variant-numeric: tabular-nums;
+  }
+  .community-cards { display: flex; gap: clamp(4px, 0.6vw, 8px); justify-content: center; min-height: 46px; }
+  .turn-status-label {
+    font-size: clamp(11px, 1.1vw, 14px); font-weight: 700; color: var(--gold-light);
+    letter-spacing: 1px; text-transform: uppercase; min-height: 16px; text-align: center;
+  }
+
+  .hand-result-banner {
+    position: absolute; top: 6%; left: 50%; transform: translateX(-50%);
+    background: rgba(9, 13, 18, 0.94); border: 1px solid var(--gold); border-radius: 12px;
+    padding: 10px 20px; font-size: 13px; text-align: center; max-width: 88%; z-index: 8; color: var(--gold-light);
+    box-shadow: 0 14px 30px rgba(0,0,0,.55);
+  }
+
+  /* ---- Cards ---- */
   .card {
-    width: 32px; height: 46px; border-radius: 5px; background: #f4f1e8; color: #111;
+    width: clamp(40px, 4vw, 76px); height: clamp(57px, 5.7vw, 108px); border-radius: 6px; background: #f6f4ec; color: #111;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 15px; line-height: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.4); flex-shrink: 0;
+    font-weight: 800; font-size: clamp(15px, 1.7vw, 26px); line-height: 1; box-shadow: 0 3px 8px rgba(0,0,0,.45);
+    flex-shrink: 0; min-width: 0; min-height: 0; padding: 0; margin: 0; max-width: none;
     border: 1px solid rgba(0,0,0,0.15);
   }
-  .card.small { width: 24px; height: 34px; font-size: 11px; border-radius: 4px; }
+  .card.big { width: clamp(50px, 4.3vw, 82px); height: clamp(71px, 6.1vw, 116px); font-size: clamp(18px, 2vw, 29px); border-radius: 7px; }
+  .card.small { width: clamp(26px, 2.2vw, 42px); height: clamp(37px, 3.1vw, 60px); font-size: clamp(10px, 1vw, 14px); border-radius: 4px; }
   .card .suit { font-size: 0.85em; margin-top: 1px; }
-  .card.red { color: #c0392b; }
+  .card.red { color: #b5342a; }
   .card.black { color: #16181a; }
   .card.back {
-    background: repeating-linear-gradient(45deg, #6f2b2b, #6f2b2b 4px, #832f2f 4px, #832f2f 8px);
-    border: 1px solid #4a1c1c;
+    background:
+      radial-gradient(circle at 50% 50%, #163a52 0%, #0b2033 70%),
+      repeating-linear-gradient(45deg, rgba(199,155,60,0.10) 0px, rgba(199,155,60,0.10) 2px, transparent 2px, transparent 10px);
+    border: 1px solid #c79b3c;
+    position: relative;
   }
-  .card.placeholder { background: rgba(255,255,255,0.06); box-shadow: none; border: 1px dashed rgba(255,255,255,0.15); }
-  .hole-cards { display: flex; gap: 3px; justify-content: center; }
+  .card.back::after {
+    content: "K"; color: rgba(212,175,55,0.55); font-size: 0.9em; font-weight: 800;
+  }
+  .card.placeholder {
+    background: rgba(255,255,255,0.035); box-shadow: none; border: 1px dashed rgba(255,255,255,0.12);
+  }
+  .hole-cards { display: flex; gap: 4px; justify-content: center; }
+  .hole-cards.my-hole .card:first-child { transform: rotate(-5deg); margin-right: -10px; }
+  .hole-cards.my-hole .card:last-child { transform: rotate(5deg); }
 
+  /* ---- Player pods / avatars ---- */
+  /* Байрлал: ellipse-томьёогоор тооцоолсон left/top-ийг JS нь
+     --seat-left / --seat-top custom property-оор энд оноодог. Тус бүр
+     data-n/data-i хатуу бичсэн CSS дүрмүүд байхгүй — доорх
+     computeSeatEllipsePosition() функц харна уу. */
   .seat-pos {
-    position: absolute; width: 108px; margin-left: -54px; margin-top: -38px;
-    display: flex; flex-direction: column; align-items: center; z-index: 4;
+    position: absolute;
+    left: var(--seat-left, 50%);
+    top: var(--seat-top, 50%);
+    width: 128px; margin-left: -64px; margin-top: -44px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px; z-index: 4;
+    transition: opacity 180ms ease, filter 180ms ease;
   }
-  .seat-pos .seat-card {
-    background: rgba(15, 20, 26, 0.9); border: 1px solid var(--border); border-radius: 10px;
-    padding: 6px 8px; text-align: center; width: 100%; position: relative;
-    transition: box-shadow 0.2s, border-color 0.2s;
+  .pod-top { display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .avatar-wrap { position: relative; width: 80px; height: 80px; flex-shrink: 0; }
+  .avatar {
+    width: 100%; height: 100%; border-radius: 50%; overflow: hidden;
+    background: linear-gradient(160deg, #2b333d, #12161c);
+    border: 2px solid #3a4351;
+    box-shadow: 0 6px 14px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06);
+    display: flex; align-items: flex-end; justify-content: center;
   }
-  .seat-pos.active-turn .seat-card { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold), 0 0 16px rgba(212,175,55,0.5); }
-  .seat-pos.folded .seat-card { opacity: 0.4; }
-  .seat-pos.eliminated .seat-card, .seat-pos.sitting-out .seat-card { opacity: 0.32; filter: grayscale(0.9); }
-  .seat-pos .seat-status-label { font-size: 9px; color: var(--text-dim); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .seat-pos .seat-name { font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .seat-pos .seat-stack { font-size: 11px; color: var(--gold-light); margin-top: 1px; }
-  .seat-pos .seat-tags { display: flex; gap: 3px; justify-content: center; margin-top: 2px; }
-  .seat-tag { font-size: 9px; padding: 1px 5px; border-radius: 999px; font-weight: 700; }
+  .avatar-silhouette { width: 74%; height: 74%; fill: #5c6674; }
+  .seat-pos .seat-tags { position: absolute; bottom: -3px; left: 50%; transform: translateX(-50%); display: flex; gap: 3px; z-index: 2; }
+  .seat-tag { font-size: 9px; padding: 1px 6px; border-radius: 999px; font-weight: 800; box-shadow: 0 2px 5px rgba(0,0,0,.4); }
   .seat-tag.dealer { background: #d4af37; color: #1a1305; }
   .seat-tag.sb { background: #3498db; color: #06131f; }
   .seat-tag.bb { background: #e67e22; color: #1f1005; }
-  .seat-pos .bet-chip {
-    position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%);
-    background: rgba(0,0,0,0.55); border: 1px solid var(--gold-light); color: var(--gold-light);
-    font-size: 10px; padding: 1px 7px; border-radius: 999px; white-space: nowrap;
+
+  .seat-card {
+    min-width: 118px; min-height: 44px;
+    padding: 5px 12px; text-align: center; position: relative;
+    border-radius: 8px 8px 15px 15px;
+    background: linear-gradient(180deg, #171d26, #0a0e13);
+    border: 1px solid rgba(255,255,255,.10);
+    box-shadow: 0 8px 16px rgba(0,0,0,.5);
+    margin-top: -8px;
   }
+  .seat-name { font-size: 13px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .seat-stack { font-size: 12px; color: var(--gold-light); margin-top: 1px; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .seat-pos .seat-status-label { font-size: 9px; color: var(--text-dim); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
   .seat-pos .seat-action-badge {
-    position: absolute; top: -10px; right: -6px; font-size: 9px; padding: 2px 6px; border-radius: 999px;
+    position: absolute; top: -10px; right: -6px; font-size: 9px; padding: 2px 7px; border-radius: 999px;
     background: var(--panel-2); border: 1px solid var(--border); color: var(--text-dim); text-transform: uppercase;
+    box-shadow: 0 2px 6px rgba(0,0,0,.4);
   }
-  .seat-pos .seat-action-badge.fold { color: var(--red); }
-  .seat-pos .seat-action-badge.call, .seat-pos .seat-action-badge.check { color: var(--green); }
+  .seat-pos .seat-action-badge.fold { color: #e08a80; }
+  .seat-pos .seat-action-badge.call, .seat-pos .seat-action-badge.check { color: #6fd48f; }
   .seat-pos .seat-action-badge.raise, .seat-pos .seat-action-badge.bet, .seat-pos .seat-action-badge.all_in { color: var(--gold-light); }
-  .seat-pos .my-hole { margin-top: 4px; }
-  .timer-ring {
-    position: absolute; top: -8px; left: -8px; width: calc(100% + 16px); height: calc(100% + 16px);
-    border-radius: 12px; pointer-events: none;
-    background: conic-gradient(var(--gold) calc(var(--pct, 100) * 1%), transparent 0);
-    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
-    mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+  .seat-pos .bet-chip {
+    position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.6); border: 1px solid var(--gold-light); color: var(--gold-light);
+    font-size: 10px; padding: 2px 9px; border-radius: 999px; white-space: nowrap;
+    box-shadow: 0 3px 8px rgba(0,0,0,.4);
+  }
+  .seat-pos .my-hole { margin-top: 6px; }
+  /* Ширээний дээд хагаст байрлах (жишээ нь тэгш тооны тоглогчтой үед яг
+     төвд ирдэг) суудлуудын карт нь pot/community зурвас руу хэт наалдахгүйн
+     тулд арай нягт, дээшээ татагдсан байрлалтай. */
+  .hole-cards-row.tight .hole-cards.my-hole { margin-top: 0; transform: scale(0.82); transform-origin: top center; }
+
+  /* ---- Player-state CSS classes (real server state drives these) ---- */
+  .seat-pos.is-folded .avatar { opacity: 0.42; }
+  .seat-pos.is-folded .seat-card { opacity: 0.5; }
+  .seat-pos.is-folded .hole-cards { filter: grayscale(0.6); transform: translateY(4px); transition: transform 220ms ease, filter 220ms ease; }
+
+  .seat-pos.is-eliminated .avatar, .seat-pos.is-eliminated .seat-card,
+  .seat-pos.is-sitting-out .avatar, .seat-pos.is-sitting-out .seat-card { opacity: 0.3; filter: grayscale(0.9); }
+
+  .seat-pos.is-disconnected .avatar { filter: grayscale(0.85); opacity: 0.55; }
+  .seat-pos .conn-dot {
+    position: absolute; bottom: 2px; right: 2px; width: 10px; height: 10px; border-radius: 50%;
+    background: #7a828d; border: 2px solid #0a0d12; z-index: 3;
+  }
+  .seat-pos.is-disconnected .conn-dot { background: #e2603c; }
+
+  .seat-pos .allin-badge {
+    position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+    background: linear-gradient(160deg, #2a1010, #120505); color: #ff8f7a;
+    border: 1px solid rgba(255,110,80,.6); font-size: 9px; font-weight: 800; letter-spacing: 1px;
+    padding: 2px 8px; border-radius: 999px; box-shadow: 0 3px 8px rgba(0,0,0,.5); z-index: 3; white-space: nowrap;
   }
 
-  /* Seat position layout for up to 8 seats around the oval, by seat count */
-  .seat-pos[data-n="2"][data-i="0"] { top: 88%; left: 50%; }
-  .seat-pos[data-n="2"][data-i="1"] { top: 4%; left: 50%; }
-  .seat-pos[data-n="3"][data-i="0"] { top: 88%; left: 50%; }
-  .seat-pos[data-n="3"][data-i="1"] { top: 28%; left: 6%; }
-  .seat-pos[data-n="3"][data-i="2"] { top: 28%; left: 94%; }
-  .seat-pos[data-n="4"][data-i="0"] { top: 88%; left: 50%; }
-  .seat-pos[data-n="4"][data-i="1"] { top: 50%; left: 2%; }
-  .seat-pos[data-n="4"][data-i="2"] { top: 4%; left: 50%; }
-  .seat-pos[data-n="4"][data-i="3"] { top: 50%; left: 98%; }
-  .seat-pos[data-n="5"][data-i="0"] { top: 88%; left: 50%; }
-  .seat-pos[data-n="5"][data-i="1"] { top: 62%; left: 2%; }
-  .seat-pos[data-n="5"][data-i="2"] { top: 8%; left: 22%; }
-  .seat-pos[data-n="5"][data-i="3"] { top: 8%; left: 78%; }
-  .seat-pos[data-n="5"][data-i="4"] { top: 62%; left: 98%; }
-  .seat-pos[data-n="6"][data-i="0"] { top: 88%; left: 50%; }
-  .seat-pos[data-n="6"][data-i="1"] { top: 62%; left: 2%; }
-  .seat-pos[data-n="6"][data-i="2"] { top: 8%; left: 14%; }
-  .seat-pos[data-n="6"][data-i="3"] { top: 4%; left: 50%; }
-  .seat-pos[data-n="6"][data-i="4"] { top: 8%; left: 86%; }
-  .seat-pos[data-n="6"][data-i="5"] { top: 62%; left: 98%; }
-  .seat-pos[data-n="7"][data-i="0"] { top: 88%; left: 50%; }
-  .seat-pos[data-n="7"][data-i="1"] { top: 70%; left: 0%; }
-  .seat-pos[data-n="7"][data-i="2"] { top: 28%; left: 4%; }
-  .seat-pos[data-n="7"][data-i="3"] { top: 4%; left: 32%; }
-  .seat-pos[data-n="7"][data-i="4"] { top: 4%; left: 68%; }
-  .seat-pos[data-n="7"][data-i="5"] { top: 28%; left: 96%; }
-  .seat-pos[data-n="7"][data-i="6"] { top: 70%; left: 100%; }
-  .seat-pos[data-n="8"][data-i="0"] { top: 88%; left: 50%; }
-  .seat-pos[data-n="8"][data-i="1"] { top: 70%; left: 0%; }
-  .seat-pos[data-n="8"][data-i="2"] { top: 30%; left: 2%; }
-  .seat-pos[data-n="8"][data-i="3"] { top: 4%; left: 26%; }
-  .seat-pos[data-n="8"][data-i="4"] { top: 4%; left: 74%; }
-  .seat-pos[data-n="8"][data-i="5"] { top: 30%; left: 98%; }
-  .seat-pos[data-n="8"][data-i="6"] { top: 70%; left: 100%; }
-  .seat-pos[data-n="8"][data-i="7"] { top: 88%; left: 82%; }
+  .timer-ring {
+    position: absolute; top: -5px; left: -5px; width: calc(100% + 10px); height: calc(100% + 10px);
+    border-radius: 50%; pointer-events: none;
+    background: conic-gradient(#e2b33c calc(var(--pct, 100) * 1%), transparent 0);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+  }
 
+  .seat-pos.is-active .avatar {
+    border-color: #e2b33c;
+    box-shadow: 0 0 0 3px rgba(226,179,60,.65), 0 0 26px rgba(226,179,60,.55), 0 6px 14px rgba(0,0,0,.5);
+    animation: activePulse 1.8s ease-in-out infinite;
+  }
+  .seat-pos.is-active .seat-card { box-shadow: 0 0 0 1px rgba(226,179,60,.5), 0 8px 16px rgba(0,0,0,.5); }
+
+  .seat-pos.is-winner .avatar {
+    border-color: var(--gold-light);
+    animation: winnerGlow 1.2s ease-out 1;
+  }
+  .seat-pos.is-winner .seat-card { box-shadow: 0 0 0 1px var(--gold-light), 0 10px 22px rgba(212,175,55,.4); }
+  .seat-pos.is-winner .hole-cards .card { box-shadow: 0 0 0 2px var(--gold-light), 0 4px 10px rgba(0,0,0,.5); }
+
+  /* Self (own) seat — the strongest visual element on the table */
+  .seat-pos.is-self { width: 280px; margin-left: -140px; margin-top: -66px; z-index: 6; }
+  .seat-pos.is-self .avatar-wrap { width: 116px; height: 116px; }
+  .seat-pos.is-self .avatar { border-width: 3px; }
+  .seat-pos.is-self .seat-name { font-size: 15px; }
+  .seat-pos.is-self .seat-stack { font-size: 14px; }
+  .seat-pos.is-self.is-active .avatar {
+    border-color: #72ff3c;
+    box-shadow: 0 0 0 4px rgba(114,255,60,.55), 0 0 30px rgba(114,255,60,.55), 0 0 62px rgba(114,255,60,.22);
+  }
+  .seat-pos.is-self .pod-top .my-hole { margin-top: 0; }
+
+  /* Хоосон суудал — тоглогч ороогүй суудлын байршлыг мөн ellipse
+     томьёогоор тооцож, дэлгэц дээр даруухан харуулна. */
+  .seat-pos.is-empty { opacity: 0.5; }
+  .seat-pos.is-empty .avatar {
+    border-style: dashed; border-color: rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.02);
+  }
+  .seat-pos.is-empty .avatar-silhouette { fill: #3a4250; }
+  .seat-pos.is-empty .seat-card { background: rgba(255,255,255,0.02); border-style: dashed; box-shadow: none; }
+  .seat-pos.is-empty .seat-name { color: var(--text-dim); font-weight: 600; }
+
+  /* ---- Action bar ---- */
   .action-bar {
-    flex-shrink: 0; background: var(--panel); border-top: 1px solid var(--border);
+    flex-shrink: 0; background: linear-gradient(180deg, rgba(10,13,18,0.2), rgba(6,8,11,0.85));
+    border-top: 1px solid rgba(255,255,255,0.07);
     padding: 10px 12px; padding-bottom: max(10px, env(safe-area-inset-bottom)); z-index: 5;
   }
-  .action-bar .my-turn-note { text-align: center; font-size: 12px; color: var(--gold-light); margin-bottom: 8px; }
-  .action-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
-  .action-buttons button { flex: 1; min-height: 44px; font-size: 13px; min-width: 64px; }
-  .raise-panel { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .action-bar .my-turn-note { text-align: center; font-size: 13px; font-weight: 700; color: var(--gold-light); margin-bottom: 8px; letter-spacing: 0.5px; }
+  .action-buttons {
+    display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
+    max-width: 900px; margin: 0 auto; width: 100%;
+  }
+  .action-buttons button {
+    flex: 1 1 160px; min-height: 66px; font-size: 21px; font-weight: 700; min-width: 100px;
+    border-radius: 16px; letter-spacing: 0.5px;
+    box-shadow: 0 10px 20px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.08);
+    border: 1px solid transparent;
+    transition: filter 150ms ease, transform 150ms ease;
+  }
+  .action-buttons button:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); }
+  .action-buttons button:active:not(:disabled) { transform: translateY(0); filter: brightness(0.95); }
+  .action-buttons button:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(0.4); }
+  /* Fold: даруухан burgundy accent */
+  #act-fold { background: linear-gradient(160deg, #3a2426, #1c1414); color: #f0d8d5; border-color: rgba(140,60,55,0.55); }
+  /* Check/Call: blue/steel accent */
+  #act-check, #act-call { background: linear-gradient(160deg, #1c2c40, #0e1826); color: #dbe9fb; border-color: rgba(60,110,170,0.55); }
+  /* Bet/Raise: gold/emerald accent */
+  #act-bet-raise { background: linear-gradient(160deg, #144a34, #0a2a1e); color: #ecfbf1; border-color: rgba(199,155,60,0.6); }
+  #act-confirm-raise { background: linear-gradient(160deg, #144a34, #0a2a1e); color: #ecfbf1; border-color: rgba(199,155,60,0.6); }
+  #act-cancel-raise { background: linear-gradient(160deg, #3a3a3d, #1c1c1e); color: #ddd; border-color: rgba(255,255,255,0.12); }
+
+  /* Requirement §6: ALL IN нь тусдаа 4-р үндсэн товч биш, raise panel
+     доторх premium сонголт. */
+  .raise-panel { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; max-width: 900px; margin-left: auto; margin-right: auto; }
   .raise-panel input[type="range"] { flex: 1; accent-color: var(--gold); height: 44px; }
-  .raise-panel .raise-amount { min-width: 70px; text-align: right; font-weight: 700; color: var(--gold-light); font-size: 14px; }
-  .raise-presets { display: flex; gap: 6px; margin-bottom: 8px; }
-  .raise-presets button { flex: 1; padding: 6px; font-size: 11px; min-height: 32px; }
+  .raise-panel .raise-amount { min-width: 74px; text-align: right; font-weight: 700; color: var(--gold-light); font-size: 16px; font-variant-numeric: tabular-nums; }
+  .raise-presets { display: flex; gap: 8px; margin-bottom: 8px; max-width: 900px; margin-left: auto; margin-right: auto; flex-wrap: wrap; }
+  .raise-presets button { flex: 1 1 60px; padding: 8px; font-size: 12px; min-height: 44px; border-radius: 10px; }
+  #preset-allin {
+    background: linear-gradient(160deg, #2a1010, #120505); color: #ffb9b9;
+    border: 1px solid rgba(160,30,30,0.7); font-weight: 800;
+  }
   .raise-only-allin-note { text-align: center; font-size: 12px; color: var(--text-dim); margin-bottom: 8px; }
-  .not-my-turn-note { text-align: center; font-size: 12px; color: var(--text-dim); padding: 8px 0; }
+  .raise-only-allin-note button {
+    margin-top: 6px; width: 100%; min-height: 48px; border-radius: 12px; font-size: 15px; font-weight: 800;
+    background: linear-gradient(160deg, #2a1010, #120505); color: #ffb9b9; border: 1px solid rgba(160,30,30,0.7);
+  }
+  .not-my-turn-note { text-align: center; font-size: 13px; color: var(--text-dim); padding: 8px 0; }
 
   .game-chat-toggle { position: absolute; top: 8px; right: 10px; z-index: 6; }
   .game-chat-drawer {
@@ -305,14 +507,100 @@
     width: 100%; max-width: 480px; height: 60vh; display: flex; flex-direction: column; padding: 12px;
   }
   .next-hand-banner {
-    position: absolute; bottom: 6%; left: 50%; transform: translateX(-50%); z-index: 6;
+    position: absolute; bottom: 5%; left: 50%; transform: translateX(-50%); z-index: 6;
+  }
+  .next-hand-banner button { border-radius: 14px; padding: 12px 22px; }
+
+  /* ---- Animation (timing per requirement §7) ---- */
+  @keyframes cardDealIn { from { opacity: 0; transform: translateY(-14px) scale(0.85); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  @keyframes potGlow { 0%, 100% { box-shadow: 0 8px 18px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06); } 50% { box-shadow: 0 8px 24px rgba(212,175,55,.35), inset 0 1px 0 rgba(255,255,255,.1); } }
+  @keyframes chipMoveIn { from { opacity: 0; transform: translate(-50%, -10px) scale(0.7); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
+  @keyframes activePulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.12); } }
+  @keyframes winnerGlow {
+    0% { box-shadow: 0 0 0 0 rgba(212,175,55,0); }
+    25% { box-shadow: 0 0 0 6px rgba(212,175,55,.6), 0 0 34px rgba(212,175,55,.65); }
+    100% { box-shadow: 0 0 0 3px rgba(212,175,55,.45), 0 0 18px rgba(212,175,55,.3); }
+  }
+  .community-cards .card, .hole-cards .card, .hole-cards .card.back { animation: cardDealIn 260ms ease-out; }
+  .seat-pos .bet-chip { animation: chipMoveIn 380ms ease-out; }
+  .seat-pos.is-active .avatar { transition: box-shadow 220ms ease; }
+  .hand-result-banner { animation: cardDealIn 320ms ease-out; }
+  @media (prefers-reduced-motion: reduce) {
+    .community-cards .card, .hole-cards .card, .hand-result-banner, .seat-pos .bet-chip,
+    .seat-pos.is-active .avatar, .seat-pos.is-winner .avatar { animation: none !important; }
+    .action-buttons button:hover:not(:disabled) { transform: none; }
+  }
+
+  @media (max-width: 900px) {
+    .poker-table { width: 92%; height: min(78%, 640px); }
+    .game-status-strip { max-width: 40vw; }
   }
 
   @media (max-width: 480px) {
-    .felt { max-height: 56vh; }
-    .card { width: 28px; height: 40px; font-size: 13px; }
-    .seat-pos { width: 84px; margin-left: -42px; margin-top: -30px; }
-    .seat-pos .seat-name { font-size: 10px; }
+    .game-topbar { height: 44px; min-height: 40px; }
+    .game-topbar .brand { font-size: 13px; }
+    .game-status-strip { display: none; }
+    .poker-table { width: 92%; height: min(74%, 520px); }
+    .card { width: 30px; height: 43px; font-size: 13px; }
+    .card.big { width: 46px; height: 65px; font-size: 17px; }
+    .card.small { width: 24px; height: 34px; font-size: 10px; }
+    .seat-pos { width: 92px; margin-left: -46px; margin-top: -34px; }
+    .avatar-wrap { width: 52px; height: 52px; }
+    .seat-card { min-width: 84px; padding: 3px 8px; }
+    .seat-name { font-size: 11px; }
+    .seat-stack { font-size: 10px; }
+    .seat-pos.is-self { width: 176px; margin-left: -88px; margin-top: -40px; }
+    .seat-pos.is-self .avatar-wrap { width: 72px; height: 72px; }
+    .seat-pos.is-self .seat-card { min-width: 100px; }
+    .action-buttons button { min-height: 50px; font-size: 15px; }
+  }
+
+  /* Short viewports (phone landscape) — compress chrome & pods regardless of width,
+     since table height is squeezed a lot more than table width there. */
+  @media (max-height: 460px) {
+    .game-topbar { height: 36px; min-height: 32px; padding-top: 2px; }
+    .game-status-strip { padding: 2px 8px; font-size: 9px; }
+    .poker-table { height: min(72%, 460px); }
+    .community-zone { gap: 2px; transform: translateY(-34px); }
+    .phase-label { display: none; }
+    .pot-display .pot-amount { padding: 2px 10px; }
+    .pot-display .pot-label { font-size: 7px; }
+    .turn-status-label { min-height: 12px; font-size: 10px; }
+    .seat-pos { width: 84px; margin-left: -42px; margin-top: -24px; }
+    .avatar-wrap { width: 40px; height: 40px; }
+    .seat-card { min-width: 76px; padding: 2px 6px; margin-top: -3px; }
+    .seat-name { font-size: 9px; }
+    .seat-stack { font-size: 8px; }
+    .seat-pos.is-self { width: 132px; margin-left: -66px; margin-top: -18px; transform: translateY(-22%); }
+    .seat-pos.is-self .avatar-wrap { width: 50px; height: 50px; }
+    .seat-pos.is-self .seat-card { min-width: 84px; }
+    .seat-pos.is-empty .seat-card { display: none; }
+    .seat-pos.is-empty .seat-status-label { display: none; }
+    .card { width: 18px; height: 26px; font-size: 8px; border-radius: 3px; }
+    .card.big { width: 27px; height: 38px; font-size: 10px; }
+    .card.small { width: 15px; height: 21px; font-size: 7px; }
+    .action-bar { padding: 4px 8px; }
+    .action-bar .my-turn-note { font-size: 10px; margin-bottom: 3px; }
+    .action-buttons { gap: 6px; }
+    .action-buttons button { min-height: 44px; font-size: 12px; border-radius: 10px; }
+  }
+
+  @media (max-width: 1100px) and (min-width: 901px) {
+    .seat-pos { width: 108px; margin-left: -54px; margin-top: -38px; }
+    .seat-pos.is-self { width: 220px; margin-left: -110px; margin-top: -58px; }
+  }
+
+  /* Дунд өндөртэй дэлгэц (жишээ нь 1024×768/1366×768 laptop) — дээд
+     суудлын pod-ыг арай нягтруулж, төвийн pot/community зурвастай
+     ойртохгүй байхаар зай гаргана. */
+  @media (max-height: 820px) and (min-height: 600px) {
+    .avatar-wrap { width: 68px; height: 68px; }
+    .seat-card { min-width: 104px; padding: 3px 10px; margin-top: -6px; }
+    .phase-label { min-height: 10px; font-size: 10px; }
+    .pot-display .pot-amount { padding: 4px 14px; }
+    .community-cards { min-height: 34px; }
+    .hole-cards-row.tight { margin-top: -12px; }
+    .hole-cards-row.tight .hole-cards.my-hole { transform: scale(0.76); }
   }
 </style>
 </head>
@@ -518,20 +806,37 @@
 <div id="game-screen" class="screen hidden">
   <div class="game-topbar">
     <div class="brand">KHAN POKER</div>
+    <div class="game-status-strip" id="game-status-strip">
+      <span>BLIND <b id="game-blinds">10/20</b></span>
+      <span class="dot">•</span>
+      <span>HAND <b>#<span id="game-hand-number">0</span></b></span>
+      <span class="dot">•</span>
+      <span>ROOM <b id="game-room-code">—</b></span>
+    </div>
     <div class="game-meta">
-      <span>Гар #<span id="game-hand-number">0</span></span>
-      <span id="game-blinds">10/20</span>
       <span class="chips-badge">🪙 <span id="game-my-stack">0</span></span>
       <button class="secondary" id="leave-game-btn" style="padding:4px 10px; font-size:12px;">Гарах</button>
     </div>
   </div>
 
-  <div class="table-wrap">
+  <div class="poker-stage" id="table-wrap">
     <button class="secondary game-chat-toggle" id="game-chat-toggle" style="padding:6px 10px; font-size:12px;">💬</button>
-    <div class="felt" id="felt">
-      <div class="pot-display">
-        <div class="pot-amount">Банк: <span id="game-pot">0</span></div>
-        <div class="community-cards" id="community-cards"></div>
+    <div class="poker-table" id="felt">
+      <div class="table-felt-surface"></div>
+      <div class="table-felt-inner">
+        <div class="felt-watermark"><span>KHAN</span><span>POKER</span></div>
+        <div class="community-zone">
+          <div class="phase-label" id="phase-label"></div>
+          <div class="pot-display">
+            <div class="pot-amount">
+              <span class="pot-label">БАНК</span>
+              <span id="game-pot">0</span>
+            </div>
+            <div id="side-pots" class="side-pots hidden"></div>
+          </div>
+          <div class="community-cards" id="community-cards"></div>
+          <div class="turn-status-label" id="turn-status-label"></div>
+        </div>
       </div>
       <div id="hand-result-banner" class="hand-result-banner hidden"></div>
       <div id="seats-container"></div>
@@ -548,17 +853,21 @@
       <div class="raise-amount"><span id="raise-amount-display">0</span></div>
     </div>
     <div id="raise-presets" class="raise-presets hidden">
-      <button class="secondary" id="preset-half">½ банк</button>
-      <button class="secondary" id="preset-threequarter">¾ банк</button>
-      <button class="secondary" id="preset-pot">Пот</button>
+      <button class="secondary" id="preset-half">½ ПОТ</button>
+      <button class="secondary" id="preset-threequarter">¾ ПОТ</button>
+      <button class="secondary" id="preset-pot">ПОТ</button>
+      <button class="secondary" id="preset-max">MAX</button>
+      <button id="preset-allin">ALL IN</button>
     </div>
-    <div id="raise-only-allin-note" class="raise-only-allin-note hidden">Зөвхөн All-in боломжтой (жетон хэмжээ хамгийн бага raise-ээс бага байна).</div>
+    <div id="raise-only-allin-note" class="raise-only-allin-note hidden">
+      Зөвхөн All-in боломжтой (жетон хэмжээ хамгийн бага raise-ээс бага байна).
+      <button id="act-allin-only-btn">ALL IN</button>
+    </div>
     <div class="action-buttons" id="action-buttons">
       <button class="danger" id="act-fold">Фолд</button>
       <button class="secondary" id="act-check">Чек</button>
       <button class="secondary" id="act-call">Колл</button>
       <button class="primary" id="act-bet-raise">Бэт</button>
-      <button class="success" id="act-allin">All-in</button>
       <button class="success" id="act-confirm-raise" style="display:none;">Батлах</button>
       <button class="secondary" id="act-cancel-raise" style="display:none;">Цуцлах</button>
     </div>
@@ -610,11 +919,19 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const configMissing = SUPABASE_URL.includes("YOUR-PROJECT-REF") || SUPABASE_ANON_KEY.includes("YOUR-ANON");
 
+// §9: Demo горим (?demo=table) нь Supabase санг ачаалж чадаагүй эсвэл
+// сүлжээ (CDN) хүрэлцэхгүй үед ч ажиллах ёстой тул `sb`-ийн үүсгэлтийг
+// try/catch-т ороож, алдаа гарвал бүхэл script царцаж зогсохгүйгээр
+// (сериалаар DEMO_MODE салбар руу хүрч чадахаар) найдвартай болгов.
 let sb = null;
-if (!configMissing) {
-  sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { persistSession: true, autoRefreshToken: true },
-  });
+try {
+  if (!configMissing && typeof supabase !== "undefined") {
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true },
+    });
+  }
+} catch (_err) {
+  sb = null;
 }
 
 // ---------------------------------------------------------------------------
@@ -764,6 +1081,133 @@ const state = {
   gameStateFetchQueued: false,
   gameStateDebounceTimer: null,
 };
+window.__TEST_EXPOSE_STATE__ = state;
+
+// ---------------------------------------------------------------------------
+// §9: Development-only demo/debug preview — зөвхөн URL дээр "?demo=table"
+// байх үед идэвхждэг. Энэ горим:
+//   - Supabase руу ЯМАР Ч дуудлага хийхгүй (sb.* нэг ч удаа дуудагдахгүй);
+//   - Бодит хэрэглэгчид харагдах ямар ч товч/UI үлдээхгүй ($DEMO_MODE=false
+//     үед энэ блок бүхэлдээ inert — доор нэмэгдэх demo panel elem-ийг ч
+//     үүсгэдэггүй);
+//   - Production Supabase өгөгдөл/ажиллагаанд ямар ч байдлаар нөлөөлөхгүй.
+// ---------------------------------------------------------------------------
+const DEMO_MODE = new URLSearchParams(location.search).get("demo") === "table";
+
+const DEMO_NAMES = ["Бат-Эрдэнэ", "Ганбаатар", "Оюунчимэг", "Сараа", "Төмөрбаатар", "Алтанцэцэг", "Мөнхбат", "Энхжин"];
+
+function demoMakePlayers(count) {
+  const players = [];
+  for (let i = 0; i < count; i++) {
+    players.push({
+      userId: i === 0 ? "demo-me" : "demo-u" + i,
+      seatNumber: i + 1,
+      displayName: DEMO_NAMES[i % DEMO_NAMES.length],
+      avatarKey: null,
+      stack: 1000 + i * 450,
+      streetBet: 0,
+      totalContribution: 0,
+      status: "active",
+      lastAction: null,
+      raiseLocked: false,
+      isDealer: i === 0,
+      isSmallBlind: i === 1 % count,
+      isBigBlind: i === 2 % count,
+      holeCardCount: 2,
+      revealedCards: null,
+    });
+  }
+  return players;
+}
+
+function demoBuildState(scenario) {
+  let count = { "2p": 2, "6p": 6, "8p": 8 }[scenario] || 6;
+  const players = demoMakePlayers(count);
+  const base = {
+    game: { id: "demo-g1", status: "active", handNumber: 7, dealerSeat: 1, smallBlind: 10, bigBlind: 20 },
+    hand: {
+      id: "demo-h1", phase: "flop", pot: 12500, currentBet: 400, minimumRaise: 400,
+      activeSeat: 1, actionDeadline: new Date(Date.now() + 18000).toISOString(),
+      stateVersion: 1, turnSeconds: 20, serverNow: new Date().toISOString(),
+      communityCards: ["Ah", "Kd", "7c"], dealerSeat: 1, smallBlindSeat: 2, bigBlindSeat: 3,
+    },
+    players,
+    myHoleCards: ["As", "Kh"],
+    isMyTurn: true,
+    legalActions: { canFold: true, canCheck: false, canCall: true, callAmount: 400, canBet: false, canRaise: true, minimumRaiseTo: 1200, maximumRaiseTo: players[0].stack, canAllIn: true },
+    handResults: [],
+    recentActions: [],
+  };
+  players.forEach((p, i) => { if (i !== 0) p.streetBet = 400; });
+
+  switch (scenario) {
+    case "turn":
+      base.isMyTurn = true;
+      base.hand.activeSeat = players[0].seatNumber;
+      break;
+    case "folded":
+      if (players[1]) players[1].status = "folded";
+      if (players[2]) players[2].status = "folded";
+      base.isMyTurn = false;
+      base.hand.activeSeat = players[Math.min(3, players.length - 1)].seatNumber;
+      break;
+    case "allin":
+      if (players[1]) { players[1].status = "all_in"; players[1].streetBet = players[1].stack; players[1].lastAction = "all_in"; }
+      base.isMyTurn = false;
+      break;
+    case "showdown": {
+      base.hand.phase = "complete";
+      base.hand.communityCards = ["Ah", "Kd", "7c", "2s", "9h"];
+      base.isMyTurn = false;
+      const winner = players[0];
+      base.handResults = [{ winnerUserIds: [winner.userId], amount: base.hand.pot, isFoldWin: false, winningDescription: "Флеш" }];
+      players.forEach((p) => { p.revealedCards = p === winner ? ["As", "Kh"] : null; });
+      break;
+    }
+    case "sidepot":
+      base.hand.sidePots = [{ amount: 4000 }, { amount: 8500 }];
+      if (players[1]) { players[1].status = "all_in"; players[1].stack = 0; players[1].lastAction = "all_in"; }
+      base.isMyTurn = false;
+      break;
+  }
+  return base;
+}
+
+function demoRender(scenario) {
+  state.session = { user: { id: "demo-me" } };
+  state.profile = { display_name: "Бат-Эрдэнэ", chips: 1000 };
+  state.currentGameId = "demo-g1";
+  state.currentRoomId = "demo-r1";
+  const gs = demoBuildState(scenario);
+  state.roomData = { code: "DEMO01", name: "Demo өрөө", max_players: gs.players.length };
+  state.gameRoster = [];
+  state.gameState = gs;
+  screen("game-screen");
+  renderGame();
+}
+
+function initDemoMode() {
+  const panel = document.createElement("div");
+  panel.id = "demo-debug-panel";
+  panel.style.cssText =
+    "position:fixed;top:60px;right:8px;z-index:999;background:rgba(10,13,18,.92);" +
+    "border:1px solid rgba(212,175,55,.5);border-radius:10px;padding:8px;display:flex;" +
+    "flex-wrap:wrap;gap:6px;max-width:220px;font-family:sans-serif;";
+  const scenarios = [
+    ["2 тоглогч", "2p"], ["6 тоглогч", "6p"], ["8 тоглогч", "8p"],
+    ["Миний ээлж", "turn"], ["Folded", "folded"], ["All-in", "allin"],
+    ["Showdown", "showdown"], ["Side pot", "sidepot"],
+  ];
+  scenarios.forEach(([label, key]) => {
+    const btn = document.createElement("button");
+    btn.textContent = label;
+    btn.style.cssText = "font-size:10px;padding:5px 7px;border-radius:6px;background:#1a2330;color:#e8ecf1;border:1px solid #263344;cursor:pointer;";
+    btn.onclick = () => demoRender(key);
+    panel.appendChild(btn);
+  });
+  document.body.appendChild(panel);
+  demoRender("6p");
+}
 
 function screen(name) {
   ["config-screen", "auth-screen", "lobby-screen", "room-screen", "game-screen", "game-finished-screen"].forEach((id) => hide($(id)));
@@ -1200,19 +1644,23 @@ async function sendChat() {
 const SUIT_SYMBOL = { s: "♠", h: "♥", d: "♦", c: "♣" };
 const SUIT_COLOR = { s: "black", h: "red", d: "red", c: "black" };
 
+function sizeClass(size) {
+  return size === "small" ? " small" : size === "big" ? " big" : "";
+}
 function cardHtml(code, size) {
   // code жишээ нь: "As", "Td", "9h", "2c"
   const rank = code.slice(0, -1);
   const suit = code.slice(-1);
-  const cls = "card" + (size === "small" ? " small" : "") + " " + (SUIT_COLOR[suit] || "black");
+  const cls = "card" + sizeClass(size) + " " + (SUIT_COLOR[suit] || "black");
   return `<div class="${cls}"><div>${escapeHtml(rank)}</div><div class="suit">${SUIT_SYMBOL[suit] || suit}</div></div>`;
 }
 function cardBackHtml(size) {
-  return `<div class="card back${size === "small" ? " small" : ""}"></div>`;
+  return `<div class="card back${sizeClass(size)}"></div>`;
 }
 function cardPlaceholderHtml(size) {
-  return `<div class="card placeholder${size === "small" ? " small" : ""}"></div>`;
+  return `<div class="card placeholder${sizeClass(size)}"></div>`;
 }
+const AVATAR_SILHOUETTE_SVG = '<svg class="avatar-silhouette" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="38" r="19"/><path d="M50 60c-23 0-38 13-38 29v11h76v-11c0-16-15-29-38-29z"/></svg>';
 
 async function enterGame(roomId) {
   state.currentRoomId = roomId;
@@ -1386,6 +1834,41 @@ async function loadGameRoster() {
   }
 }
 
+const PHASE_LABEL_MAP = { preflop: "PREFLOP", flop: "FLOP", turn: "TURN", river: "RIVER", showdown: "RIVER", settlement: "", complete: "" };
+
+// ---------------------------------------------------------------------------
+// Ellipse seat positioning (§2 requirement) — суудлын байрлалыг ширээний
+// төвийг тойрсон ellipse координатоор ТООЦООЛЖ гаргана. Тусдаа дэлгэц
+// хэмжээ/тоглогчийн тоо бүрт гараар `left/top` CSS дүрэм бичихгүй.
+// Индекс 0 (өөрийн суудал, эргүүлсэн жагсаалтын эхэнд байрлана) үргэлж
+// ДООД ТӨВД (90°) байрлана, бусад суудлууд цагийн зүүний эсрэг дараалалтай
+// ellipse дагуу жигд тархана. Дээд/доод хагасын радиус ялгаатай нь доод
+// хэсгийг action-bar-тай давхцахгүйгээр арай төвд, дээд хэсгийг ширээний
+// ирмэгт ойртуулж бодит casino table-ийн харагдацтай тааруулна.
+function computeSeatEllipsePosition(i, total) {
+  if (total <= 0) return { left: 50, top: 50 };
+  const angleStep = (2 * Math.PI) / total;
+  const angle = Math.PI / 2 + i * angleStep;
+  const rx = 47;
+  const ryBottom = 36; // доод хагас (өөрийн эгнээ) — action bar-тай зай гаргана
+  const ryTop = 47; // дээд хагас — ширээний ирмэгт ойртуулна
+  const sin = Math.sin(angle);
+  const cos = Math.cos(angle);
+  const ry = sin >= 0 ? ryBottom : ryTop;
+  const left = 50 + rx * cos;
+  const top = 50 + ry * sin;
+  return { left: Math.max(3, Math.min(97, left)), top: Math.max(1, Math.min(92, top)) };
+}
+
+function renderCommunitySlots(cards) {
+  const list = cards || [];
+  const html = [];
+  for (let i = 0; i < 5; i++) {
+    html.push(list[i] ? cardHtml(list[i]) : cardPlaceholderHtml());
+  }
+  $("community-cards").innerHTML = html.join("");
+}
+
 function renderGame() {
   const gs = state.gameState;
   if (!gs) return;
@@ -1395,6 +1878,8 @@ function renderGame() {
   setText($("game-blinds"), `${gs.game.smallBlind}/${gs.game.bigBlind}`);
   const myEntry = gs.players.find((p) => p.userId === me);
   setText($("game-my-stack"), (myEntry ? myEntry.stack : state.profile?.chips ?? 0));
+  const roomCodeEl = $("game-room-code");
+  if (roomCodeEl) roomCodeEl.textContent = (state.roomData && state.roomData.code) || "—";
 
   const hand = gs.hand;
   const seatsContainer = $("seats-container");
@@ -1404,13 +1889,29 @@ function renderGame() {
 
   if (!hand) {
     setText($("game-pot"), 0);
-    $("community-cards").innerHTML = "";
+    renderCommunitySlots([]);
+    setText($("phase-label"), "");
+    setText($("turn-status-label"), "");
+    hide($("side-pots"));
     renderActionBar(gs);
     return;
   }
 
-  setText($("game-pot"), hand.pot);
-  $("community-cards").innerHTML = (hand.communityCards || []).map((c) => cardHtml(c)).join("");
+  setText($("game-pot"), (hand.pot ?? 0).toLocaleString());
+  // §5: server-ээс side pot массив ирвэл (сервер логик энэ шатанд өөрчлөгдөөгүй
+  // тул одоогоор ихэвчлэн байхгүй) жижиг жагсаалт болгон харуулна. Байхгүй
+  // үед бүхэлдээ нуугдана — front-end хуурамч side-pot зохиохгүй.
+  if (hand.sidePots && hand.sidePots.length > 1) {
+    $("side-pots").innerHTML = hand.sidePots
+      .map((sp, idx) => `<div class="side-pot-line">${idx === 0 ? "ГОЛ ПОТ" : "SIDE POT " + idx}: ${(sp.amount ?? 0).toLocaleString()}</div>`)
+      .join("");
+    show($("side-pots"));
+  } else {
+    hide($("side-pots"));
+  }
+  renderCommunitySlots(hand.communityCards);
+  setText($("phase-label"), PHASE_LABEL_MAP[hand.phase] ?? String(hand.phase || "").toUpperCase());
+  setText($("turn-status-label"), gs.isMyTurn ? "ТАНЫ ЭЭЛЖ" : "");
 
   // Идэвхтэй hand-ийн тоглогчид + requirement #7-ийн дагуу sitting_out/
   // eliminated (энэ hand-д байхгүй ч роостерт байгаа) тоглогчдыг нэмж,
@@ -1432,26 +1933,81 @@ function renderGame() {
     }));
   const combinedPlayers = gs.players.concat(extraSeats).sort((a, b) => a.seatNumber - b.seatNumber);
 
-  const n = combinedPlayers.length;
-  // Тоглогчдын жагсаалтыг ЭЭЛЖИЙН дараалалтай тааруулж, "миний суудал"
-  // ХАМГИЙН ДООД (top:88%) байрлалд байрлуулна — бусад тоглогч цагийн зүү
-  // дагуу эргэн харагдана.
-  const myIdx = combinedPlayers.findIndex((p) => p.userId === me);
+  // §2/§10: тоглогчдыг seat number-аар тогтвортой байрлуулна. §2-ын "Хоосон
+  // суудал" шаардлагын дагуу room-ийн max_players хүртэлх дүүргэгдээгүй
+  // суудлуудыг ч мөн (Server-ийн бодит room_players/rooms_safe-аас ирсэн
+  // max_players дүнгээр — тааж зохиомол тоглогч нэмэхгүй) ellipse цагиран дээр
+  // харуулна.
+  const maxPlayers = (state.roomData && state.roomData.max_players) || combinedPlayers.length;
+  const bySeat = new Map(combinedPlayers.map((p) => [p.seatNumber, p]));
+  const fullSeats = [];
+  for (let s = 1; s <= maxPlayers; s++) {
+    fullSeats.push(bySeat.get(s) || { seatNumber: s, isEmptySeat: true });
+  }
+
+  // "Миний суудал" ХАМГИЙН ДООД төвд (i=0, 90°) байрлана — бусад тоглогч
+  // цагийн зүүний дагуу эргэн харагдана.
+  const myIdx = fullSeats.findIndex((p) => p.userId === me);
   const order = myIdx >= 0
-    ? combinedPlayers.slice(myIdx).concat(combinedPlayers.slice(0, myIdx))
-    : combinedPlayers;
+    ? fullSeats.slice(myIdx).concat(fullSeats.slice(0, myIdx))
+    : fullSeats;
+  const total = order.length;
+
+  // §3: showdown-ийн ялагчдын userId-г server-ийн handResults-аас (зохиомол
+  // биш, бодит) цуглуулна.
+  const winnerUserIds = new Set();
+  if (hand.phase === "complete" && gs.handResults) {
+    gs.handResults.forEach((r) => (r.winnerUserIds || []).forEach((uid) => winnerUserIds.add(uid)));
+  }
 
   order.forEach((p, i) => {
     const el = document.createElement("div");
+    const pos = computeSeatEllipsePosition(i, total);
+    el.style.setProperty("--seat-left", pos.left + "%");
+    el.style.setProperty("--seat-top", pos.top + "%");
+    // Ширээний ДЭЭД хагаст байрлах суудлуудын хувьд (жишээ нь тэгш тооны
+    // тоглогчид үед яг төвд ирдэг суудал) картыг nameplate-ийн ДООД (төв рүү
+    // чиглэсэн) талд биш ДЭЭД (хүрээ рүү чиглэсэн) талд харуулж, төвийн
+    // pot/community зурвастай давхцахаас сэргийлнэ.
+    const seatAngle = Math.PI / 2 + i * ((2 * Math.PI) / total);
+    const isTopHalf = Math.sin(seatAngle) < -0.01;
+
+    if (p.isEmptySeat) {
+      el.className = "seat-pos is-empty";
+      el.innerHTML = `
+        <div class="pod-top">
+          <div class="avatar-wrap"><div class="avatar">${AVATAR_SILHOUETTE_SVG}</div></div>
+        </div>
+        <div class="seat-card">
+          <div class="seat-name">Суудал</div>
+          <div class="seat-status-label">${p.seatNumber}</div>
+        </div>
+      `;
+      seatsContainer.appendChild(el);
+      return;
+    }
+
     const isEliminated = p.status === "eliminated";
     const isSittingOut = p.status === "sitting_out";
+    const isAllIn = p.status === "all_in";
+    const isFolded = p.status === "folded";
+    const isSelf = p.userId === me;
+    const isWinner = winnerUserIds.has(p.userId);
+    const isActiveNow = hand.activeSeat === p.seatNumber && hand.phase !== "complete" && !["complete", "settlement"].includes(hand.phase);
+    // §3: .is-disconnected — сервер одоогоор холболтын төлөв дамжуулдаггүй
+    // тул `p.isDisconnected` үргэлж undefined/false байна; ирээдүйд backend
+    // ийм талбар нэмбэл энд шууд идэвхжинэ (frontend зохиомол утга үүсгэхгүй).
+    const isDisconnected = !!p.isDisconnected;
+
     el.className = "seat-pos"
-      + (p.status === "folded" ? " folded" : "")
-      + (isEliminated ? " eliminated" : "")
-      + (isSittingOut ? " sitting-out" : "")
-      + (hand.activeSeat === p.seatNumber && hand.phase !== "complete" ? " active-turn" : "");
-    el.dataset.n = String(n);
-    el.dataset.i = String(i);
+      + (isSelf ? " is-self" : "")
+      + (isFolded ? " is-folded" : "")
+      + (isAllIn ? " is-all-in" : "")
+      + (isWinner ? " is-winner" : "")
+      + (isDisconnected ? " is-disconnected" : "")
+      + (isEliminated ? " is-eliminated" : "")
+      + (isSittingOut ? " is-sitting-out" : "")
+      + (isActiveNow ? " is-active" : "");
 
     const tags = [];
     if (p.isDealer) tags.push('<span class="seat-tag dealer">D</span>');
@@ -1460,30 +2016,37 @@ function renderGame() {
 
     let holeHtml = "";
     if (!p.isExtraSeat) {
-      if (p.userId === me && gs.myHoleCards && gs.myHoleCards.length) {
-        holeHtml = `<div class="hole-cards my-hole">${gs.myHoleCards.map((c) => cardHtml(c, "small")).join("")}</div>`;
+      if (isSelf && gs.myHoleCards && gs.myHoleCards.length) {
+        holeHtml = `<div class="hole-cards my-hole">${gs.myHoleCards.map((c) => cardHtml(c, "big")).join("")}</div>`;
       } else if (p.revealedCards && p.revealedCards.length) {
-        holeHtml = `<div class="hole-cards my-hole">${p.revealedCards.map((c) => cardHtml(c, "small")).join("")}</div>`;
+        holeHtml = `<div class="hole-cards my-hole">${p.revealedCards.map((c) => cardHtml(c)).join("")}</div>`;
       } else if (p.holeCardCount > 0 && p.status !== "folded") {
         holeHtml = `<div class="hole-cards my-hole">${cardBackHtml("small")}${cardBackHtml("small")}</div>`;
       }
     }
 
-    const isActiveNow = hand.activeSeat === p.seatNumber && hand.phase !== "complete" && !["complete","settlement"].includes(hand.phase);
     const timerRing = isActiveNow ? `<div class="timer-ring" id="timer-ring-${p.seatNumber}"></div>` : "";
     const statusLabel = isEliminated ? "Хасагдсан" : isSittingOut ? "Түр гарсан" : "";
 
     el.innerHTML = `
+      <div class="pod-top">
+        <div class="avatar-wrap">
+          ${timerRing}
+          <div class="avatar">${AVATAR_SILHOUETTE_SVG}</div>
+          <div class="seat-tags">${tags.join("")}</div>
+          ${isDisconnected ? '<div class="conn-dot"></div>' : ""}
+        </div>
+        ${isSelf ? holeHtml : ""}
+      </div>
+      ${isAllIn ? '<div class="allin-badge">ALL IN</div>' : ""}
       <div class="seat-card">
-        ${timerRing}
         <div class="seat-name">${escapeHtml(p.displayName)}</div>
         <div class="seat-stack">🪙 ${p.stack}</div>
-        <div class="seat-tags">${tags.join("")}</div>
         ${statusLabel ? `<div class="seat-status-label">${statusLabel}</div>` : ""}
-        ${p.lastAction ? `<div class="seat-action-badge ${p.lastAction}">${actionLabel(p.lastAction)}</div>` : ""}
-        ${p.streetBet > 0 ? `<div class="bet-chip">${p.streetBet}</div>` : ""}
+        ${p.lastAction && !isAllIn ? `<div class="seat-action-badge ${p.lastAction}">${actionLabel(p.lastAction)}</div>` : ""}
+        ${p.streetBet > 0 ? `<div class="bet-chip">${p.streetBet.toLocaleString()}</div>` : ""}
       </div>
-      ${holeHtml}
+      ${!isSelf ? `<div class="hole-cards-row${isTopHalf ? " tight" : ""}">${holeHtml}</div>` : ""}
     `;
     seatsContainer.appendChild(el);
   });
@@ -1539,17 +2102,19 @@ function renderActionBar(gs) {
   $("act-fold").style.display = legal.canFold ? "" : "none";
   $("act-check").style.display = legal.canCheck ? "" : "none";
   $("act-call").style.display = legal.canCall ? "" : "none";
-  $("act-call").textContent = `Колл ${legal.callAmount}`;
-  $("act-bet-raise").style.display = (legal.canBet || legal.canRaise) ? "" : "none";
-  $("act-bet-raise").textContent = legal.canBet ? "Бэт" : "Нэмэх";
-  // Requirement #10: All-in нь тусдаа, шууд дарж болох товч.
-  $("act-allin").style.display = legal.canAllIn ? "" : "none";
+  $("act-call").textContent = `Колл ${(legal.callAmount ?? 0).toLocaleString()}`;
+  // §6: ALL IN нь тусдаа 4-р товч биш — BET/RAISE (эсвэл зөвхөн all-in
+  // боломжтой үед энэ товч л) дарж raise panel-руу орно.
+  const canOpenRaisePanel = legal.canBet || legal.canRaise || legal.canAllIn;
+  $("act-bet-raise").style.display = canOpenRaisePanel ? "" : "none";
+  $("act-bet-raise").textContent = legal.canBet ? "Бэт" : (legal.canRaise ? "Нэмэх" : "All-in");
 }
 
 $("act-fold").onclick = () => submitAction("fold");
 $("act-check").onclick = () => submitAction("check");
 $("act-call").onclick = () => submitAction("call");
-$("act-allin").onclick = () => submitAction("all_in");
+$("act-allin-only-btn").onclick = () => submitAction("all_in");
+$("preset-allin").onclick = () => submitAction("all_in");
 
 $("act-bet-raise").onclick = () => {
   const gs = state.gameState;
@@ -1563,19 +2128,18 @@ $("act-bet-raise").onclick = () => {
   $("act-check").style.display = "none";
   $("act-call").style.display = "none";
   $("act-bet-raise").style.display = "none";
-  $("act-allin").style.display = "none";
   $("act-cancel-raise").style.display = "";
 
   // Requirement #9: min > max тохиолдолд (жишээ нь тоглогч зөвхөн
   // min-raise-ээс бага хэмжээгээр л all-in хийж чадна) slider-ийг харуулахгүй,
-  // зөвхөн All-in боломжтой гэдгийг мэдэгдэнэ (доод action-bar-ын All-in
-  // товчийг дахин харуулна).
-  if (min > max) {
+  // зөвхөн All-in боломжтой гэдгийг мэдэгдэж, шууд дарж болох ALL IN товч
+  // (raise panel доторх) харуулна.
+  if (min > max || !legal.canBet && !legal.canRaise) {
     hide($("raise-panel"));
     hide($("raise-presets"));
+    $("act-allin-only-btn").style.display = legal.canAllIn ? "" : "none";
     show($("raise-only-allin-note"));
     $("act-confirm-raise").style.display = "none";
-    $("act-allin").style.display = legal.canAllIn ? "" : "none";
     return;
   }
 
@@ -1586,6 +2150,7 @@ $("act-bet-raise").onclick = () => {
   updateRaiseDisplay();
   show($("raise-panel"));
   show($("raise-presets"));
+  $("preset-allin").style.display = legal.canAllIn ? "" : "none";
   $("act-confirm-raise").style.display = "";
 };
 
@@ -1628,11 +2193,19 @@ function presetRaiseTo(fraction) {
 $("preset-half").onclick = () => { $("raise-slider").value = presetRaiseTo(0.5); updateRaiseDisplay(); };
 $("preset-threequarter").onclick = () => { $("raise-slider").value = presetRaiseTo(0.75); updateRaiseDisplay(); };
 $("preset-pot").onclick = () => { $("raise-slider").value = presetRaiseTo(1); updateRaiseDisplay(); };
+$("preset-max").onclick = () => {
+  const gs = state.gameState;
+  if (!gs || !gs.legalActions) return;
+  $("raise-slider").value = gs.legalActions.maximumRaiseTo;
+  updateRaiseDisplay();
+};
 
 async function submitAction(action, raiseTo) {
   const gs = state.gameState;
   if (!gs || !gs.hand) return;
   $("action-buttons").querySelectorAll("button").forEach((b) => (b.disabled = true));
+  $("raise-presets").querySelectorAll("button").forEach((b) => (b.disabled = true));
+  $("act-allin-only-btn").disabled = true;
   $("act-confirm-raise").disabled = true;
   try {
     const { error } = await sb.rpc("submit_poker_action_v2", {
@@ -1668,6 +2241,8 @@ async function submitAction(action, raiseTo) {
     await refreshGameState();
   } finally {
     $("action-buttons").querySelectorAll("button").forEach((b) => (b.disabled = false));
+    $("raise-presets").querySelectorAll("button").forEach((b) => (b.disabled = false));
+    $("act-allin-only-btn").disabled = false;
     $("act-confirm-raise").disabled = false;
   }
 }
@@ -1949,7 +2524,11 @@ async function init() {
   }
 }
 
-init();
+if (DEMO_MODE) {
+  initDemoMode();
+} else {
+  init();
+}
 </script>
 </body>
 </html>
