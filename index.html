@@ -877,6 +877,23 @@ function unsubscribeLobbyRealtime() {
 async function onAuthed(session) {
   state.session = session;
   await loadProfile();
+
+  // Хэрэв энэ хэрэглэгч аль хэдийн идэвхтэй өрөөнд гишүүн байвал
+  // (жишээ нь хуудсаа дахин ачаалсан) шууд тэр өрөөнд нь оруулна —
+  // лобид үлдэж "Өрөөнөөс гарах" товчийг дарж чадахгүй байдлаас сэргийлнэ.
+  const { data: activeMembership } = await sb
+    .from("room_players")
+    .select("room_id")
+    .eq("user_id", session.user.id)
+    .eq("status", "active")
+    .limit(1)
+    .maybeSingle();
+
+  if (activeMembership) {
+    await enterRoom(activeMembership.room_id);
+    return;
+  }
+
   screen("lobby-screen");
   await refreshLobby();
   subscribeLobbyRealtime();
